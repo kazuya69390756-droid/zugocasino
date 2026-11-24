@@ -740,7 +740,7 @@ var after = $("poker-after");
 if (state.hit) {
 $("poker-msg").textContent = "♠A！ロイヤルフラッシュ完成！";
 var c = L.celebrateFor(state.odds.value);
-after.innerHTML = '<p class="win-odds">' + state.ticket + " " + state.odds.text + "倍 的中！</p>" +
+after.innerHTML = '<p class="win-odds">' + state.odds.text + "倍 的中！</p>" +
 '<p class="celebrate-msg" style="font-size:' + (1.02 + c.tier * 0.09) + 'rem;">' +
 c.message + "</p>";
 launchConfetti(c.tier);
