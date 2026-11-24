@@ -221,6 +221,15 @@
     60%{ transform:translate(-50%,-50%) rotate(-4deg) scale(1.15); opacity:1; }
     100%{ transform:translate(-50%,-50%) rotate(-4deg) scale(1); opacity:1; } }
 
+  /* ---------- revival cut-in ---------- */
+  .revival-overlay{ position:fixed; inset:0; background:#000; z-index:80;
+    display:flex; align-items:center; justify-content:center; padding:20px; }
+  .revival-overlay[hidden]{ display:none; }
+  .revival-text{ font-size:clamp(1.5rem, 6.8vw, 2.6rem); font-weight:900; text-align:center; line-height:1.5;
+    color:var(--gold-light); letter-spacing:.06em;
+    text-shadow:0 0 24px rgba(212,175,55,.8), 0 2px 0 #9a7b1e; animation:revival-in .6s ease; }
+  @keyframes revival-in{ 0%{ opacity:0; transform:scale(.7); } 100%{ opacity:1; transform:scale(1); } }
+
   /* ---------- result / ranking / share ---------- */
   .result-hero{ text-align:center; }
   .result-hero .ticket{ font-size:1.15rem; color:var(--muted); letter-spacing:.1em; }
@@ -304,9 +313,9 @@
   <!-- ===== 1st roulette ===== -->
   <section class="screen" id="screen-stage1">
     <div class="panel">
-      <span class="stage-tag">1st STAGE</span>
+      <span class="stage-tag" id="stage1-tag">1st STAGE</span>
       <h2 class="stage-title">ルーレット「買い目を決めろ」</h2>
-      <p class="stage-desc">カジノルーレットで券種を1回抽選。WIN5は全体の1.2％、激レアだ。</p>
+      <p class="stage-desc" id="stage1-desc">カジノルーレットで券種を1回抽選。WIN5は全体の1.2％、激レアだ。</p>
       <div class="wheel-wrap">
         <div class="wheel-pointer"></div>
         <svg id="wheel" viewBox="0 0 340 340" role="img" aria-label="券種ルーレット"></svg>
@@ -582,20 +591,26 @@ var cx = 170, cy = 170, R = 164, rText = 112;
 // Arrangement: the 4 main tickets take turns one by one in a fixed
 // rotation (base order shuffled each build, repeated 5 rounds), so
 // the same ticket never sits in adjacent pockets. WIN5 goes anywhere.
-var mainTickets = ["単勝", "馬連", "三連複", "三連単"];
+var finalMode = !!state.inFinal;
+var mainTickets = finalMode? ["三連複", "三連単", "WIN5"]: ["単勝", "馬連", "三連複", "三連単"];
 var base = mainTickets.slice();
 for (var i = base.length - 1; i > 0; i--) {
 var j = Math.floor(Math.random() * (i + 1));
 var tmp = base[i]; base[i] = base[j]; base[j] = tmp;
 }
 var seq = [];
+if (finalMode) {
+// Final challenge: 12 equal pockets, 4 per ticket (each ticket 1/3).
+for (var r2 = 0; r2 < 4; r2++) base.forEach(function (t) { seq.push(t); });
+} else {
 for (var r = 0; r < 5; r++) base.forEach(function (t) { seq.push(t); });
 seq.splice(Math.floor(Math.random() * (seq.length + 1)), 0, "WIN5");
+}
 wheelPockets = [];
 var start = 0;
 seq.forEach(function (ticket) {
 var win5Sweep = L.ROULETTE.filter(function (s) { return s.ticket === "WIN5"; })[0].weight * 3.6;
-var sweep = ticket === "WIN5"? win5Sweep: (360 - win5Sweep) / 20;
+var sweep = finalMode? 30: (ticket === "WIN5"? win5Sweep: (360 - win5Sweep) / 20);
 var end = start + sweep;
 var p1 = polar(cx, cy, R, start), p2 = polar(cx, cy, R, end);
 var path = document.createElementNS(NS, "path");
@@ -611,7 +626,7 @@ var tp = polar(cx, cy, rText, mid);
 var text = document.createElementNS(NS, "text");
 text.setAttribute("x", tp[0]); text.setAttribute("y", tp[1]);
 text.setAttribute("fill", "#fff");
-text.setAttribute("font-size", ticket === "WIN5"? "10": "11");
+text.setAttribute("font-size", finalMode? "13": (ticket === "WIN5"? "10": "11"));
 text.setAttribute("font-weight", "900");
 text.setAttribute("text-anchor", "middle");
 text.setAttribute("dominant-baseline", "middle");
@@ -632,10 +647,17 @@ hubText.setAttribute("font-weight", "900"); hubText.setAttribute("text-anchor", 
 hubText.setAttribute("dominant-baseline", "middle");
 hubText.textContent = "ズゴ";
 svg.appendChild(hubText);
+if (finalMode) {
+$("wheel-legend").innerHTML = ["三連複", "三連単", "WIN5"].map(function (t) {
+return '<span><span class="dot" style="background:' + WHEEL_COLORS[t] + '"></span>' +
+t + " 約33%</span>";
+}).join("");
+} else {
 $("wheel-legend").innerHTML = L.ROULETTE.map(function (s) {
 return '<span><span class="dot" style="background:' + WHEEL_COLORS[s.ticket] + '"></span>' +
 s.ticket + " " + s.weight + "%</span>";
 }).join("");
+}
 }
 
 function spinWheel() {
@@ -644,7 +666,7 @@ wheelSpinning = true;
 $("btn-spin-wheel").disabled = true;
 $("btn-to-stage2").hidden = true;
 $("roulette-result").textContent = "";
-state.ticket = L.pickTicket();
+state.ticket = state.inFinal? ["三連複", "三連単", "WIN5"][Math.floor(Math.random() * 3)]: L.pickTicket();
 // Land on a random pocket of the drawn ticket type.
 var cands = wheelPockets.filter(function (p) { return p.ticket === state.ticket; });
 var pocket = cands[Math.floor(Math.random() * cands.length)];
@@ -1062,6 +1084,32 @@ ta.remove(); done();
 }
 }
 
+/* ================= revival: final challenge ================= */
+function startRevival() {
+var ov = $("revival-overlay"), tx = $("revival-text");
+tx.textContent = "おや！？これはまさか・・・";
+tx.classList.remove("revival-text"); void tx.offsetWidth; tx.classList.add("revival-text");
+ov.hidden = false;
+setTimeout(function () {
+tx.textContent = "一発逆転！ずごファイナルチャレンジ";
+tx.classList.remove("revival-text"); void tx.offsetWidth; tx.classList.add("revival-text");
+}, 2100);
+setTimeout(function () { ov.hidden = true; startFinalChallenge(); }, 4400);
+}
+
+function startFinalChallenge() {
+state.inFinal = true;
+state.ticket = null; state.reels = null; state.odds = null; state.hit = null; state.pushType = null;
+buildWheel();
+$("stage1-tag").textContent = "FINAL CHALLENGE";
+$("stage1-desc").textContent = "一発逆転！券種は三連複・三連単・WIN5の3つだけ、各1/3だ。";
+$("roulette-result").textContent = "";
+$("btn-to-stage2").hidden = true;
+$("ball").hidden = true;
+$("callout").hidden = true;
+show("screen-stage1");
+}
+
 /* ================= wiring ================= */
 buildWheel();
 $("btn-start").addEventListener("click", function () { show("screen-stage1");});
@@ -1072,8 +1120,14 @@ $("btn-spin-slot").addEventListener("click", spinSlot);
 $("btn-stop-" + i).addEventListener("click", function () { stopReel(i);});
 });
 $("btn-to-stage3").addEventListener("click", startPoker);
-$("btn-to-result").addEventListener("click", showResult);
+$("btn-to-result").addEventListener("click", function () {
+if (!state.hit && !state.inFinal && Math.random() < 0.25) startRevival();
+else showResult();
+});
 $("btn-again").addEventListener("click", function () {
+state.inFinal = false;
+$("stage1-tag").textContent = "1st STAGE";
+$("stage1-desc").textContent = "カジノルーレットで券種を1回抽選。WIN5は全体の1.2％、激レアだ。";
 buildWheel();
 $("ball").hidden = true;
 $("callout").hidden = true;
@@ -1100,5 +1154,6 @@ if (ev.target === $("rank-modal")) $("rank-modal").hidden = true;
 });
 })();
 </script>
+<div class="revival-overlay" id="revival-overlay" hidden><p class="revival-text" id="revival-text"></p></div>
 </body>
 </html>
