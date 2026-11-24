@@ -1096,16 +1096,42 @@ ta.remove(); done();
 }
 
 /* ================= revival: final challenge ================= */
+// "Puchun"-style blackout: everything cuts out instantly with a
+// power-down blip, a beat of pure black silence, then the telops.
+function puchunSound() {
+try {
+var AC = window.AudioContext || window.webkitAudioContext;
+if (!AC) return;
+var ctx = puchunSound.ctx || (puchunSound.ctx = new AC());
+if (ctx.state === "suspended") ctx.resume();
+var t = ctx.currentTime;
+[["square", 1500, 0.10], ["triangle", 760, 0.07]].forEach(function (cfg) {
+var osc = ctx.createOscillator(), g = ctx.createGain();
+osc.type = cfg[0];
+osc.frequency.setValueAtTime(cfg[1], t);
+osc.frequency.exponentialRampToValueAtTime(48, t + 0.16);
+g.gain.setValueAtTime(cfg[2], t);
+g.gain.exponentialRampToValueAtTime(0.001, t + 0.19);
+osc.connect(g); g.connect(ctx.destination);
+osc.start(t); osc.stop(t + 0.2);
+});
+} catch (e) {}
+}
+
 function startRevival() {
 var ov = $("revival-overlay"), tx = $("revival-text");
+puchunSound();
+tx.textContent = "";
+ov.hidden = false; // instant cut to black, no fade: the "puchun"
+setTimeout(function () {
 tx.textContent = "おや！？これはまさか・・・";
 tx.classList.remove("revival-text"); void tx.offsetWidth; tx.classList.add("revival-text");
-ov.hidden = false;
+}, 1500);
 setTimeout(function () {
 tx.textContent = "一発逆転！ずごファイナルチャレンジ";
 tx.classList.remove("revival-text"); void tx.offsetWidth; tx.classList.add("revival-text");
-}, 2100);
-setTimeout(function () { ov.hidden = true; startFinalChallenge(); }, 4400);
+}, 3700);
+setTimeout(function () { ov.hidden = true; startFinalChallenge(); }, 5900);
 }
 
 function startFinalChallenge() {
