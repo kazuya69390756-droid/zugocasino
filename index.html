@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>ズゴカジノ</title>
+<style>
+  :root{
+    --gold:#d4af37; --gold-light:#f5d97e; --gold-dark:#8a6d1f;
+    --bg:#0b0b12; --panel:#171722; --panel2:#1f1f2e;
+    --text:#f5f0dc; --muted:#b8b090; --red:#e03131; --green:#0f5132;
+    --felt:#14532d;
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:radial-gradient(1200px 600px at 50% -10%, #2a2140 0%, var(--bg) 55%) fixed, var(--bg);
+    color:var(--text);
+    font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+    min-height:100vh;
+  }
+  .wrap{ max-width:520px; margin:0 auto; padding:16px 14px 40px; }
+  header.top{ text-align:center; padding:10px 0 4px; }
+  header.top h1{
+    margin:0; font-size:2rem; letter-spacing:.12em;
+    background:linear-gradient(180deg,#fff3c4, var(--gold) 55%, var(--gold-dark));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    text-shadow:0 2px 18px rgba(212,175,55,.15);
+  }
+  header.top .sub{ color:var(--muted); font-size:.82rem; margin-top:4px; letter-spacing:.08em; }
+  .screen{ display:none; }
+  .screen.active{ display:block; animation:fadein .35s ease; }
+  @keyframes fadein{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:none;} }
+  .panel{
+    background:linear-gradient(180deg,var(--panel2),var(--panel));
+    border:1px solid rgba(212,175,55,.45); border-radius:16px;
+    padding:18px 16px; margin-top:14px;
+    box-shadow:0 10px 30px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.05);
+  }
+  .stage-tag{
+    display:inline-block; font-size:.72rem; letter-spacing:.15em; color:#111;
+    background:linear-gradient(180deg,var(--gold-light),var(--gold));
+    border-radius:999px; padding:3px 12px; font-weight:700;
+  }
+  h2.stage-title{ margin:10px 0 4px; font-size:1.35rem; }
+  .stage-desc{ color:var(--muted); font-size:.88rem; margin:0 0 8px; line-height:1.6; }
+  .btn{
+    appearance:none; border:1px solid rgba(212,175,55,.6); cursor:pointer;
+    background:linear-gradient(180deg,#3a3a4d,#262633); color:var(--text);
+    border-radius:999px; padding:13px 26px; font-size:1rem; font-weight:700;
+    letter-spacing:.06em; transition:transform .08s ease, filter .15s ease;
+  }
+  .btn:active{ transform:scale(.97); }
+  .btn:disabled{ opacity:.35; cursor:default; }
+  .btn-primary{
+    background:linear-gradient(180deg,var(--gold-light),var(--gold) 60%,var(--gold-dark));
+    color:#241a00; border-color:#ffe98a;
+    box-shadow:0 6px 18px rgba(212,175,55,.35);
+  }
+  .btn-ghost{ background:transparent; }
+  .btn-row{ display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:14px; }
+  .hero-img{
+    width:150px; height:150px; border-radius:50%; object-fit:cover; display:block; margin:8px auto;
+    border:3px solid var(--gold); box-shadow:0 0 34px rgba(212,175,55,.45);
+  }
+  .center{ text-align:center; }
+  .steps{ text-align:left; margin:12px auto 0; max-width:400px; line-height:1.9; font-size:.92rem; color:var(--text); }
+  .steps b{ color:var(--gold-light); }
+
+  /* ---------- 1st: roulette ---------- */
+  .wheel-wrap{ position:relative; width:min(86vw,340px); margin:10px auto 4px; }
+  .wheel-pointer{
+    position:absolute; left:50%; top:-8px; transform:translateX(-50%); z-index:3;
+    width:0; height:0; border-left:13px solid transparent; border-right:13px solid transparent;
+    border-top:22px solid var(--red); filter:drop-shadow(0 2px 3px rgba(0,0,0,.6));
+  }
+  #wheel{ width:100%; height:auto; display:block; filter:drop-shadow(0 12px 24px rgba(0,0,0,.55)); }
+  .legend{ display:flex; flex-wrap:wrap; gap:6px 12px; justify-content:center; font-size:.78rem; color:var(--muted); margin-top:10px; }
+  .legend .dot{ display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:4px; vertical-align:-1px; }
+  .stage-result{
+    text-align:center; font-size:1.25rem; font-weight:800; margin-top:12px; min-height:1.6em;
+    color:var(--gold-light);
+  }
+
+  /* ---------- 2nd: slot ---------- */
+  .slot-machine{
+    background:linear-gradient(180deg,#2b2b3d,#191924); border:2px solid var(--gold);
+    border-radius:18px; padding:16px 12px 14px; margin-top:8px;
+  }
+  .slot-ticket{ text-align:center; font-weight:800; color:var(--gold-light); letter-spacing:.1em; margin-bottom:10px; }
+  .reels{ display:flex; gap:8px; justify-content:center; }
+  .reel-col{ flex:1; max-width:150px; }
+  .reel-window{
+    height:92px; border-radius:12px; overflow:hidden; position:relative;
+    background:linear-gradient(180deg,#fdfdf8,#e8e4d2); color:#191919;
+    border:2px solid #999; box-shadow:inset 0 10px 14px rgba(0,0,0,.25), inset 0 -10px 14px rgba(0,0,0,.25);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .reel-strip{ text-align:center; font-weight:900; font-size:2rem; line-height:92px; white-space:nowrap; }
+  .reel-strip.small{ font-size:1.05rem; }
+  .reel-strip.spinning{ animation:reelspin .28s linear infinite; filter:blur(3px); }
+  @keyframes reelspin{ from{ transform:translateY(-46px);} to{ transform:translateY(46px);} }
+  .reel-strip.stopped{ animation:reelpop .25s ease; }
+  @keyframes reelpop{ 0%{ transform:scale(1.25);} 100%{ transform:scale(1);} }
+  .reel-label{ text-align:center; font-size:.72rem; color:var(--muted); margin-top:6px; letter-spacing:.1em; }
+  .btn-stop{ width:100%; margin-top:8px; padding:10px 4px; font-size:.92rem; }
+  .odds-line{ text-align:center; margin-top:14px; font-size:1.05rem; min-height:1.5em; }
+  .odds-line b{ color:var(--gold-light); font-size:1.5rem; }
+
+  /* ---------- 3rd: poker ---------- */
+  .poker-table{
+    background:radial-gradient(ellipse at 50% 40%, #1d7a44 0%, var(--felt) 62%, #0b3d22 100%);
+    border:3px solid #6b4423; border-radius:20px; padding:20px 10px 16px; margin-top:8px;
+    box-shadow:inset 0 0 40px rgba(0,0,0,.5);
+  }
+  .cards{ display:flex; gap:6px; justify-content:center; perspective:900px; }
+  .card{
+    width:17.5%; max-width:64px; aspect-ratio:5/7; border-radius:8px; position:relative;
+    background:linear-gradient(180deg,#ffffff,#ececec); color:#111;
+    box-shadow:0 6px 14px rgba(0,0,0,.45);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+  }
+  .card .num{ font-size:1.25rem; font-weight:900; line-height:1; }
+  .card .suit{ font-size:1.3rem; line-height:1.1; }
+  .card.red-card{ color:var(--red); }
+  .card.flip-card{ background:transparent; box-shadow:none; }
+  .card-inner{
+    position:absolute; inset:0; transform-style:preserve-3d;
+    transition:transform .45s ease; transform:rotateY(180deg); /* 裏向きが初期状態 */
+  }
+  .card-face{
+    position:absolute; inset:0; border-radius:8px; backface-visibility:hidden; -webkit-backface-visibility:hidden;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    background:linear-gradient(180deg,#ffffff,#ececec); box-shadow:0 6px 14px rgba(0,0,0,.45);
+  }
+  .card-face.back{
+    transform:rotateY(180deg); color:#fff; font-weight:900; letter-spacing:.08em;
+    background:repeating-linear-gradient(45deg,#8c1d2f 0 8px,#a92438 8px 16px);
+    border:2px solid #e8c96a;
+  }
+  .card-face.front{ transform:rotateY(0deg); }
+  .poker-msg{ text-align:center; min-height:1.6em; margin-top:12px; font-weight:700; }
+  .btn-push-red{
+    width:150px; height:150px; border-radius:50%; border:6px solid #7a1010;
+    background:radial-gradient(circle at 35% 30%, #ff8a8a, var(--red) 55%, #8f1414);
+    color:#fff; font-size:1.7rem; font-weight:900; letter-spacing:.15em; cursor:pointer;
+    box-shadow:0 10px 0 #5f0d0d, 0 18px 30px rgba(0,0,0,.55);
+    animation:pulse 1s ease-in-out infinite;
+  }
+  .btn-push-red:active{ transform:translateY(6px); box-shadow:0 4px 0 #5f0d0d; }
+  @keyframes pulse{ 0%,100%{ filter:brightness(1);} 50%{ filter:brightness(1.25);} }
+  .btn-push-zugo{
+    width:150px; height:150px; border-radius:50%; border:6px solid var(--gold);
+    background-size:cover; background-position:center; cursor:pointer; position:relative;
+    box-shadow:0 0 34px rgba(212,175,55,.75), 0 14px 26px rgba(0,0,0,.5);
+    animation:zugowink 1.6s ease-in-out infinite;
+    color:#fff;
+  }
+  @keyframes zugowink{
+    0%,100%{ transform:rotate(0deg) scale(1); }
+    12%{ transform:rotate(-3deg) scale(1.03, .94); }  /* wink風に一瞬つぶれる */
+    24%{ transform:rotate(0deg) scale(1); }
+    55%{ transform:rotate(2deg) scale(1.02); }
+  }
+  .btn-push-zugo .push-label{
+    position:absolute; left:50%; bottom:-14px; transform:translateX(-50%);
+    background:linear-gradient(180deg,var(--gold-light),var(--gold)); color:#241a00;
+    font-weight:900; padding:4px 18px; border-radius:999px; font-size:1.05rem; letter-spacing:.2em;
+    box-shadow:0 4px 10px rgba(0,0,0,.4); white-space:nowrap;
+  }
+  .btn-push-zugo .sparkle{
+    position:absolute; font-size:1.5rem; color:#fff6bf; text-shadow:0 0 10px #ffd94d;
+    animation:sparkle 1.1s ease-in-out infinite;
+  }
+  @keyframes sparkle{ 0%,100%{ opacity:.15; transform:scale(.7) rotate(0deg);} 50%{ opacity:1; transform:scale(1.25) rotate(25deg);} }
+  .push-area{ text-align:center; margin-top:18px; min-height:160px; }
+  .darken{ position:fixed; inset:0; background:rgba(0,0,0,.72); z-index:5; pointer-events:none; animation:fadein .6s ease; }
+  .miss-msg{ text-align:center; font-size:1.3rem; font-weight:800; color:#cfd4ff; margin-top:14px; }
+  .celebrate-msg{ text-align:center; font-weight:900; color:var(--gold-light); margin-top:14px; line-height:1.5;
+    text-shadow:0 0 18px rgba(212,175,55,.55); }
+  .confetti{ position:fixed; top:-4vh; z-index:40; pointer-events:none; border-radius:2px;
+    animation-name:confettifall; animation-timing-function:linear; animation-fill-mode:forwards; }
+  @keyframes confettifall{ to{ transform:translateY(112vh) rotate(720deg); opacity:.85; } }
+
+  /* ---------- result / ranking / share ---------- */
+  .result-hero{ text-align:center; }
+  .result-hero .ticket{ font-size:1.15rem; color:var(--muted); letter-spacing:.1em; }
+  .result-hero .odds{ font-size:2.6rem; font-weight:900; color:var(--gold-light); margin:2px 0; }
+  .result-hero .outcome{ font-size:1.45rem; font-weight:900; }
+  .result-hero .outcome.hit{ color:#7be495; }
+  .result-hero .outcome.miss{ color:#9aa3c7; }
+  .rank-form{
+    margin-top:16px; border:2px solid var(--gold); border-radius:14px; padding:14px;
+    background:linear-gradient(180deg, rgba(212,175,55,.16), rgba(212,175,55,.05));
+    box-shadow:0 0 22px rgba(212,175,55,.35); text-align:center;
+  }
+  .rank-form .rg-cta{ font-weight:900; color:var(--gold-light); margin:0 0 10px; }
+  .rank-form input{
+    width:100%; padding:12px; border-radius:10px; border:1px solid #666; font-size:1rem;
+    background:#101018; color:var(--text); margin-bottom:10px;
+  }
+  .btn-register{
+    width:100%; animation:pulse-gold 1.4s ease-in-out infinite;
+  }
+  @keyframes pulse-gold{ 0%,100%{ box-shadow:0 0 8px rgba(212,175,55,.4);} 50%{ box-shadow:0 0 26px rgba(212,175,55,.9);} }
+  .btn-register.stop{ animation:none; }
+  .rg-hint{ font-size:.78rem; color:var(--muted); margin:8px 0 0; }
+  .rg-status{ text-align:center; color:var(--gold-light); min-height:1.4em; margin-top:10px; font-size:.9rem; }
+  .share-panel{ margin-top:16px; }
+  .share-preview{
+    white-space:pre-wrap; background:#101018; border:1px solid rgba(212,175,55,.35);
+    border-radius:12px; padding:14px; font-size:.92rem; line-height:1.7;
+  }
+  .share-hint{ color:var(--muted); font-size:.8rem; }
+  .copy-note{ color:#7be495; font-size:.85rem; text-align:center; }
+  .modal{
+    position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:50;
+    display:flex; align-items:flex-start; justify-content:center; padding:22px 12px; overflow-y:auto;
+  }
+  .modal[hidden]{ display:none; }
+  .modal-box{
+    background:var(--panel); border:1px solid var(--gold); border-radius:16px;
+    width:100%; max-width:480px; padding:18px 16px;
+  }
+  .modal-head{ display:flex; justify-content:space-between; align-items:center; }
+  .modal-head h2{ margin:0; font-size:1.2rem; }
+  .rank-sec{ font-weight:900; color:var(--gold-light); margin:16px 0 8px; }
+  .rank-row{
+    display:flex; align-items:center; gap:8px; padding:8px 10px; border-radius:10px;
+    background:rgba(255,255,255,.04); margin-bottom:6px; font-size:.92rem;
+  }
+  .rank-row.me{ background:rgba(212,175,55,.18); border:1px solid rgba(212,175,55,.5); }
+  .rank-row .no{ font-weight:900; color:var(--gold-light); min-width:2.6em; }
+  .rank-row .nm{ flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .rank-row .tk{ color:var(--muted); font-size:.8rem; }
+  .rank-row .sc{ font-weight:900; }
+  .rank-total,.rank-me-info,.rank-empty{ color:var(--muted); font-size:.88rem; }
+  footer{ text-align:center; color:var(--muted); font-size:.75rem; margin-top:22px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>ズゴカジノ</h1>
+    <p class="sub">券種も オッズも 的中も、全部運で決まる</p>
+  </header>
+
+  <!-- ===== start ===== -->
+  <section class="screen active" id="screen-start">
+    <div class="panel center">
+      <img class="hero-img" src="assets/zugo.jpg" alt="ずご" />
+      <div class="steps">
+        <div><b>1st</b> ルーレット「買い目を決めろ」… 券種を1回抽選</div>
+        <div><b>2nd</b> スロット「オッズを決めろ」… 3つのリールでオッズ決定</div>
+        <div><b>3rd</b> ポーカー「的中を決めろ」… ロイヤルフラッシュを決めろ</div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="btn-start" type="button">カジノへ入る</button>
+        <button class="btn btn-ghost" id="btn-ranking-start" type="button">ランキング</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 1st roulette ===== -->
+  <section class="screen" id="screen-stage1">
+    <div class="panel">
+      <span class="stage-tag">1st STAGE</span>
+      <h2 class="stage-title">ルーレット「買い目を決めろ」</h2>
+      <p class="stage-desc">カジノルーレットで券種を1回抽選。WIN5は全体の1％、激レアだ。</p>
+      <div class="wheel-wrap">
+        <div class="wheel-pointer"></div>
+        <svg id="wheel" viewBox="0 0 340 340" role="img" aria-label="券種ルーレット"></svg>
+      </div>
+      <div class="legend" id="wheel-legend"></div>
+      <div class="stage-result" id="roulette-result"></div>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="btn-spin-wheel" type="button">ルーレットを回す</button>
+        <button class="btn btn-primary" id="btn-to-stage2" type="button" hidden>2ndステージへ</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 2nd slot ===== -->
+  <section class="screen" id="screen-stage2">
+    <div class="panel">
+      <span class="stage-tag">2nd STAGE</span>
+      <h2 class="stage-title">スロット「オッズを決めろ」</h2>
+      <p class="stage-desc">リールは高速回転で目押し不可。左 → 中 → 右の順に止めてくれ。結果は純粋に抽選で決まる。</p>
+      <div class="slot-machine">
+        <div class="slot-ticket" id="slot-ticket"></div>
+        <div class="reels">
+          <div class="reel-col">
+            <div class="reel-window"><div class="reel-strip" id="reel-0">?</div></div>
+            <div class="reel-label">左リール</div>
+            <button class="btn btn-stop" id="btn-stop-0" type="button" disabled>止める</button>
+          </div>
+          <div class="reel-col">
+            <div class="reel-window"><div class="reel-strip" id="reel-1">?</div></div>
+            <div class="reel-label">中リール</div>
+            <button class="btn btn-stop" id="btn-stop-1" type="button" disabled>止める</button>
+          </div>
+          <div class="reel-col">
+            <div class="reel-window"><div class="reel-strip" id="reel-2">?</div></div>
+            <div class="reel-label">右リール</div>
+            <button class="btn btn-stop" id="btn-stop-2" type="button" disabled>止める</button>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" id="btn-spin-slot" type="button">リールを回す</button>
+        </div>
+        <div class="odds-line" id="odds-line"></div>
+        <div class="btn-row">
+          <button class="btn btn-primary" id="btn-to-stage3" type="button" hidden>3rdステージへ</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 3rd poker ===== -->
+  <section class="screen" id="screen-stage3">
+    <div class="panel">
+      <span class="stage-tag">3rd STAGE</span>
+      <h2 class="stage-title">ポーカー「的中を決めろ」</h2>
+      <p class="stage-desc">スペードのロイヤルフラッシュまで、あと1枚。最後のカードをディーラーがめくる。</p>
+      <div class="poker-table">
+        <div class="cards" id="poker-cards">
+          <div class="card"><div class="num">10</div><div class="suit">♠</div></div>
+          <div class="card"><div class="num">J</div><div class="suit">♠</div></div>
+          <div class="card"><div class="num">Q</div><div class="suit">♠</div></div>
+          <div class="card"><div class="num">K</div><div class="suit">♠</div></div>
+          <div class="card flip-card">
+            <div class="card-inner" id="last-card-inner">
+              <div class="card-face front" id="last-card-face">
+                <div class="num" id="last-card-num">？</div>
+                <div class="suit" id="last-card-suit"></div>
+              </div>
+              <div class="card-face back">Z</div>
+            </div>
+          </div>
+        </div>
+        <p class="poker-msg" id="poker-msg">あなたの券種とオッズは決まった。あとはこの1枚…</p>
+      </div>
+      <div class="push-area" id="push-area"></div>
+      <div id="poker-after"></div>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="btn-to-result" type="button" hidden>結果を見る</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== result ===== -->
+  <section class="screen" id="screen-result">
+    <div class="panel">
+      <div class="result-hero">
+        <div class="ticket" id="r-ticket"></div>
+        <div class="odds" id="r-odds"></div>
+        <div class="outcome" id="r-outcome"></div>
+      </div>
+      <div id="r-celebrate"></div>
+      <div class="rank-form" id="rank-form">
+        <p class="rg-cta">ランキングに登録しよう！</p>
+        <input id="rg-name" type="text" maxlength="24" placeholder="名前（XのIDなど）" autocomplete="off" />
+        <button class="btn btn-primary btn-register" id="btn-register" type="button">ランキングに登録</button>
+        <p class="rg-hint">一度登録すれば、次回からは自動で登録されるよ</p>
+      </div>
+      <p class="rg-status" id="rg-status"></p>
+      <div class="share-panel">
+        <h2 style="margin:0 0 4px; font-size:1.05rem;">投稿文プレビュー</h2>
+        <p class="share-hint">下の文をコピーして、Xに貼り付けて投稿してください。</p>
+        <div class="share-preview" id="share-preview"></div>
+        <div class="btn-row">
+          <button class="btn" id="btn-copy" type="button">投稿文をコピーする</button>
+        </div>
+        <p class="copy-note" id="copy-note" hidden>コピーしました！Xに貼り付けて投稿できます。</p>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="btn-again" type="button">もう一度遊ぶ</button>
+        <button class="btn btn-ghost" id="btn-ranking-result" type="button">ランキング</button>
+      </div>
+    </div>
+  </section>
+
+  <footer>ズゴカジノは運だけのミニゲームです。実際の金銭は一切かかりません。</footer>
+</div>
+
+<!-- ranking modal -->
+<div class="modal" id="rank-modal" hidden>
+  <div class="modal-box">
+    <div class="modal-head">
+      <h2>ランキング</h2>
+      <button class="btn" id="btn-rank-close" type="button" style="padding:8px 18px;">閉じる</button>
+    </div>
+    <p class="rank-total" id="rank-total"></p>
+    <div id="rank-me"></div>
+    <div id="rank-list"></div>
+  </div>
+</div>
+
+<div id="fx-layer"></div>
+
+<script>
+/*LOGIC-START*/
+var ZC_LOGIC = (function () {
+"use strict";
+
+// 1st roulette: ticket weights (percent). Sum = 100.
+var ROULETTE = [
+{ ticket: "単勝", weight: 24.75},
+{ ticket: "馬連", weight: 24.75},
+{ ticket: "三連複", weight: 24.75},
+{ ticket: "三連単", weight: 24.75},
+{ ticket: "WIN5", weight: 1}
+];
+
+function range(a, b) { var r = []; for (var i = a; i <= b; i++) r.push(String(i)); return r;}
+
+// 2nd slot: reel contents per ticket. Every item is equally likely.
+function reelsFor(ticket) {
+var dec = []; for (var d = 0; d <= 9; d++) dec.push("." + d);
+switch (ticket) {
+case "単勝":
+return { left: range(0, 3), mid: range(1, 9), right: dec.slice()};
+case "馬連":
+return { left: range(0, 9), mid: range(1, 9), right: dec.slice()};
+case "三連複":
+return { left: range(0, 3), mid: range(1, 9), right: range(0, 9)};
+case "三連単":
+return { left: range(0, 9), mid: range(1, 9), right: range(0, 9).concat(["00", "25"])};
+case "WIN5":
+return { left: range(0, 9), mid: range(1, 9), right: ["2525", "252525", "25252525"]};
+default:
+return null;
+}
+}
+
+function withCommas(n) {
+return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+// Assemble odds by string concatenation.
+// Returns { value:number, text:string} where text has no "倍".
+function buildOdds(ticket, l, m, r) {
+if (ticket === "単勝" || ticket === "馬連") {
+var intPart = parseInt(l + m, 10); // drops a leading zero: "0"+"4" -> 4
+var text = intPart + r; // r is like ".3"
+return { value: parseFloat(text), text: text};
+}
+var v = parseInt(l + m + r, 10); // "2"+"5"+"00" -> 2500, "0"+"4"+"5" -> 45
+return { value: v, text: withCommas(v)};
+}
+
+// 3rd: celebration tiers by odds value.
+var CELEBRATIONS = [
+{ max: 10, message: "おめでとう！またチャレンジしてね！"},
+{ max: 100, message: "おめでとう！明日のタネ銭ゲットだぜ！"},
+{ max: 500, message: "素晴らしい！とりあえず焼肉へ行こう！"},
+{ max: 1000, message: "素晴らしい！とりあえず寿司へ行こう！"},
+{ max: 5000, message: "強運の持ち主ですね！おめでとうございます！"},
+{ max: 10000, message: "半帯ゲット！彼女へのプレゼントは忘れるなよ！"},
+{ max: 100000, message: "帯獲得おめでとう！その帯でビンタしてくれ！"},
+{ max: 1000000, message: "マーヴェラス！帰り道に気を付けてね！"},
+{ max: Infinity, message: "億万長者やーーー！！！！！セレクトセールへどうぞ！"}
+];
+
+function celebrateFor(value) {
+for (var i = 0; i < CELEBRATIONS.length; i++) {
+if (value < CELEBRATIONS[i].max) return { tier: i + 1, message: CELEBRATIONS[i].message};
+}
+return { tier: 9, message: CELEBRATIONS[8].message};
+}
+
+// Weighted pick for the roulette. rand is injectable for testing.
+function pickTicket(rand) {
+var x = (typeof rand === "number"? rand: Math.random()) * 100;
+var acc = 0;
+for (var i = 0; i < ROULETTE.length; i++) {
+acc += ROULETTE[i].weight;
+if (x < acc) return ROULETTE[i].ticket;
+}
+return ROULETTE[ROULETTE.length - 1].ticket;
+}
+
+function pickItem(items, rand) {
+var x = typeof rand === "number"? rand: Math.random();
+return items[Math.min(items.length - 1, Math.floor(x * items.length))];
+}
+
+return {
+ROULETTE: ROULETTE,
+reelsFor: reelsFor,
+buildOdds: buildOdds,
+celebrateFor: celebrateFor,
+pickTicket: pickTicket,
+pickItem: pickItem,
+withCommas: withCommas
+};
+})();
+/*LOGIC-END*/
+</script>
+
+<script>
+(function () {
+"use strict";
+var L = window.ZC_LOGIC;
+
+var state = {
+ticket: null,
+reels: null, // {left,mid,right} chosen items
+odds: null, // {value,text}
+pushType: null, // "red" | "zugo"
+hit: null,
+submittedKey: ""
+};
+
+function $(id) { return document.getElementById(id);}
+function show(screenId) {
+var screens = document.querySelectorAll(".screen");
+for (var i = 0; i < screens.length; i++) screens[i].classList.remove("active");
+$(screenId).classList.add("active");
+window.scrollTo(0, 0);
+}
+
+/* ================= 1st: roulette ================= */
+var WHEEL_COLORS = { "単勝": "#2e6fb7", "馬連": "#3f9e4d", "三連複": "#c9a227", "三連単": "#8e44ad", "WIN5": "#e03131"};
+var wheelRotation = 0;
+var wheelSpinning = false;
+
+function polar(cx, cy, r, deg) {
+var rad = (deg - 90) * Math.PI / 180;
+return [cx + r * Math.cos(rad), cy + r * Math.sin(rad)];
+}
+function buildWheel() {
+var svg = $("wheel");
+var NS = "http://www.w3.org/2000/svg";
+svg.innerHTML = "";
+var cx = 170, cy = 170, R = 164, rText = 108;
+var start = 0;
+L.ROULETTE.forEach(function (seg) {
+var sweep = seg.weight * 3.6;
+var end = start + sweep;
+var p1 = polar(cx, cy, R, start), p2 = polar(cx, cy, R, end);
+var path = document.createElementNS(NS, "path");
+var large = sweep > 180? 1: 0;
+path.setAttribute("d", "M " + cx + " " + cy + " L " + p1[0].toFixed(2) + " " + p1[1].toFixed(2) +
+" A " + R + " " + R + " 0 " + large + " 1 " + p2[0].toFixed(2) + " " + p2[1].toFixed(2) + " Z");
+path.setAttribute("fill", WHEEL_COLORS[seg.ticket]);
+path.setAttribute("stroke", "#0b0b12");
+path.setAttribute("stroke-width", "2");
+svg.appendChild(path);
+var mid = start + sweep / 2;
+var tp = polar(cx, cy, rText, mid);
+var text = document.createElementNS(NS, "text");
+text.setAttribute("x", tp[0]); text.setAttribute("y", tp[1]);
+text.setAttribute("fill", "#fff");
+text.setAttribute("font-size", seg.ticket === "WIN5"? "10": "19");
+text.setAttribute("font-weight", "900");
+text.setAttribute("text-anchor", "middle");
+text.setAttribute("dominant-baseline", "middle");
+text.setAttribute("transform", "rotate(" + mid + " " + tp[0] + " " + tp[1] + ")");
+text.textContent = seg.ticket;
+svg.appendChild(text);
+seg._center = mid;
+start = end;
+});
+var hub = document.createElementNS(NS, "circle");
+hub.setAttribute("cx", cx); hub.setAttribute("cy", cy); hub.setAttribute("r", 34);
+hub.setAttribute("fill", "#171722"); hub.setAttribute("stroke", "#d4af37"); hub.setAttribute("stroke-width", "3");
+svg.appendChild(hub);
+var hubText = document.createElementNS(NS, "text");
+hubText.setAttribute("x", cx); hubText.setAttribute("y", cy);
+hubText.setAttribute("fill", "#f5d97e"); hubText.setAttribute("font-size", "15");
+hubText.setAttribute("font-weight", "900"); hubText.setAttribute("text-anchor", "middle");
+hubText.setAttribute("dominant-baseline", "middle");
+hubText.textContent = "ズゴ";
+svg.appendChild(hubText);
+$("wheel-legend").innerHTML = L.ROULETTE.map(function (s) {
+return '<span><span class="dot" style="background:' + WHEEL_COLORS[s.ticket] + '"></span>' +
+s.ticket + " " + s.weight + "%</span>";
+}).join("");
+}
+
+function spinWheel() {
+if (wheelSpinning) return;
+wheelSpinning = true;
+$("btn-spin-wheel").disabled = true;
+$("btn-to-stage2").hidden = true;
+$("roulette-result").textContent = "";
+state.ticket = L.pickTicket();
+var seg = null;
+L.ROULETTE.forEach(function (s) { if (s.ticket === state.ticket) seg = s;});
+// Land the segment center on the top pointer. Wheel coords: segment
+// centers are measured clockwise from the top, so rotate by -center.
+var target = (360 - seg._center) % 360;
+var current = ((wheelRotation % 360) + 360) % 360;
+var delta = (target - current + 360) % 360;
+wheelRotation += 360 * 6 + delta;
+var wheel = $("wheel");
+wheel.style.transition = "transform 5s cubic-bezier(.12,.8,.08,1)";
+wheel.style.transform = "rotate(" + wheelRotation + "deg)";
+setTimeout(function () {
+wheelSpinning = false;
+$("roulette-result").textContent = "券種は「" + state.ticket + "」に決定！";
+$("btn-to-stage2").hidden = false;
+$("btn-spin-wheel").disabled = false;
+}, 5200);
+}
+
+/* ================= 2nd: slot ================= */
+var slotSpinning = false;
+var stoppedCount = 0;
+var reelTimers = [];
+
+function setReelText(i, txt) {
+var el = $("reel-" + i);
+el.textContent = txt;
+el.classList.toggle("small", txt.length >= 4);
+}
+function startSlot() {
+show("screen-stage2");
+$("slot-ticket").textContent = "券種：" + state.ticket;
+$("odds-line").innerHTML = "";
+$("btn-to-stage3").hidden = true;
+$("btn-spin-slot").disabled = false;
+[0, 1, 2].forEach(function (i) { setReelText(i, "?"); $("btn-stop-" + i).disabled = true;});
+}
+function spinSlot() {
+if (slotSpinning) return;
+// Results are drawn up-front: stop timing can never change them.
+var reels = L.reelsFor(state.ticket);
+state.reels = {
+left: L.pickItem(reels.left),
+mid: L.pickItem(reels.mid),
+right: L.pickItem(reels.right)
+};
+slotSpinning = true;
+stoppedCount = 0;
+$("btn-spin-slot").disabled = true;
+$("btn-to-stage3").hidden = true;
+$("odds-line").innerHTML = "";
+var pools = [reels.left, reels.mid, reels.right];
+reelTimers.forEach(clearInterval); reelTimers = [];
+[0, 1, 2].forEach(function (i) {
+var el = $("reel-" + i);
+el.classList.remove("stopped");
+el.classList.add("spinning");
+reelTimers[i] = setInterval(function () {
+setReelText(i, pools[i][Math.floor(Math.random() * pools[i].length)]);
+}, 50);
+$("btn-stop-" + i).disabled = i!== 0; // only the left reel can stop first
+});
+}
+function stopReel(i) {
+if (!slotSpinning || i!== stoppedCount) return;
+clearInterval(reelTimers[i]);
+var el = $("reel-" + i);
+el.classList.remove("spinning");
+el.classList.add("stopped");
+var chosen = [state.reels.left, state.reels.mid, state.reels.right][i];
+setReelText(i, chosen);
+$("btn-stop-" + i).disabled = true;
+stoppedCount++;
+if (stoppedCount < 3) {
+$("btn-stop-" + stoppedCount).disabled = false;
+} else {
+slotSpinning = false;
+state.odds = L.buildOdds(state.ticket, state.reels.left, state.reels.mid, state.reels.right);
+$("odds-line").innerHTML = "オッズは <b>" + state.odds.text + "倍</b> に決定！";
+$("btn-to-stage3").hidden = false;
+}
+}
+
+/* ================= 3rd: poker ================= */
+function startPoker() {
+show("screen-stage3");
+$("last-card-inner").style.transform = "rotateY(180deg)";
+$("last-card-num").textContent = "？";
+$("last-card-suit").textContent = "";
+$("last-card-face").classList.remove("red-card");
+$("poker-msg").textContent = state.ticket + " " + state.odds.text + "倍。あとはこの1枚で的中が決まる…";
+$("poker-after").innerHTML = "";
+$("btn-to-result").hidden = true;
+// The push-button type is drawn 50/50; it decides hit/miss.
+state.pushType = Math.random() < 0.5? "red": "zugo";
+state.hit = state.pushType === "zugo";
+var area = $("push-area");
+area.innerHTML = "";
+var btn = document.createElement("button");
+btn.type = "button";
+if (state.pushType === "red") {
+btn.className = "btn-push-red";
+btn.textContent = "PUSH";
+} else {
+btn.className = "btn-push-zugo";
+btn.style.backgroundImage = "url('assets/zugo.jpg')";
+btn.setAttribute("aria-label", "押せ（ずごボタン）");
+btn.innerHTML = '<span class="sparkle" style="top:12px; right:16px;">✦</span>' +
+'<span class="sparkle" style="top:30px; left:10px; animation-delay:.4s;">✦</span>' +
+'<span class="push-label">押せ！</span>';
+}
+btn.addEventListener("click", revealCard);
+area.appendChild(btn);
+}
+
+function revealCard() {
+$("push-area").innerHTML = "";
+$("poker-msg").textContent = "めくるぞ… めくるぞ…";
+var inner = $("last-card-inner");
+// Set the revealed face before the tease so the final flip shows it.
+if (state.hit) {
+$("last-card-num").textContent = "A";
+$("last-card-suit").textContent = "♠";
+$("last-card-face").classList.remove("red-card");
+} else {
+$("last-card-num").textContent = "2";
+$("last-card-suit").textContent = "♦";
+$("last-card-face").classList.add("red-card");
+}
+// Tease: peek a little more each time, then flip fully.
+var steps = [148, 180, 112, 180, 64, 180, 0];
+var delay = 0;
+steps.forEach(function (deg, idx) {
+delay += idx === 0? 350: 430;
+setTimeout(function () { inner.style.transform = "rotateY(" + deg + "deg)";}, delay);
+});
+setTimeout(afterReveal, delay + 550);
+}
+
+function afterReveal() {
+var after = $("poker-after");
+if (state.hit) {
+$("poker-msg").textContent = "♠A！ロイヤルフラッシュ完成！";
+var c = L.celebrateFor(state.odds.value);
+after.innerHTML = '<p class="celebrate-msg" style="font-size:' + (1.02 + c.tier * 0.09) + 'rem;">' +
+c.message + "</p>";
+launchConfetti(c.tier);
+} else {
+$("poker-msg").textContent = "♦2… あと1枚が遠かった。";
+after.innerHTML = '<p class="miss-msg">残念… 外れ</p>';
+var dark = document.createElement("div");
+dark.className = "darken";
+$("fx-layer").appendChild(dark);
+setTimeout(function () { dark.remove();}, 1600);
+}
+$("btn-to-result").hidden = false;
+}
+
+function launchConfetti(tier) {
+var colors = ["#d4af37", "#f5d97e", "#e03131", "#3f9e4d", "#2e6fb7", "#ffffff"];
+var count = 12 + tier * 13;
+for (var i = 0; i < count; i++) {
+var el = document.createElement("div");
+el.className = "confetti";
+var size = 5 + Math.random() * (4 + tier);
+el.style.left = Math.random() * 100 + "vw";
+el.style.width = size + "px";
+el.style.height = size * (0.5 + Math.random()) + "px";
+el.style.background = colors[i % colors.length];
+el.style.animationDuration = (1.6 + Math.random() * 1.8) + "s";
+el.style.animationDelay = (Math.random() * 0.7) + "s";
+document.body.appendChild(el);
+(function (node) { setTimeout(function () { node.remove();}, 4600);})(el);
+}
+}
+
+/* ================= result / share / ranking ================= */
+var savedName = "";
+try { savedName = localStorage.getItem("zc_name") || "";} catch (e) {}
+if (savedName) $("rg-name").value = savedName;
+
+function buildShareText() {
+var lines = [
+"結果！",
+"券種：" + state.ticket,
+"オッズ：" + state.odds.text + "倍"
+];
+if (state.hit) {
+lines.push("結果：的中！ロイヤルフラッシュ完成！");
+lines.push(L.celebrateFor(state.odds.value).message);
+} else {
+lines.push("結果：外れ… ♦2");
+}
+lines.push("");
+lines.push("券種もオッズも的中も、全部運で決まるカジノゲーム！");
+lines.push("#ズゴカジノ");
+lines.push("");
+lines.push("@zugo25");
+return lines.join("\n");
+}
+
+function showResult() {
+show("screen-result");
+$("r-ticket").textContent = "券種：" + state.ticket;
+$("r-odds").textContent = state.odds.text + "倍";
+var oc = $("r-outcome");
+if (state.hit) {
+oc.textContent = "的中！ロイヤルフラッシュ完成！";
+oc.className = "outcome hit";
+var c = L.celebrateFor(state.odds.value);
+$("r-celebrate").innerHTML = '<p class="celebrate-msg" style="font-size:' +
+(1.02 + c.tier * 0.09) + 'rem;">' + c.message + "</p>";
+$("rank-form").style.display = "";
+} else {
+oc.textContent = "外れ… ♦2";
+oc.className = "outcome miss";
+$("r-celebrate").innerHTML = "";
+$("rank-form").style.display = "none"; // misses are not ranked
+}
+$("rg-status").textContent = state.hit? "": "外れはランキング対象外だよ。もう一度挑戦してね！";
+$("share-preview").textContent = buildShareText();
+$("copy-note").hidden = true;
+state.submittedKey = "";
+// Auto-register on a saved device (hit results only).
+if (state.hit && savedName) submitScore(savedName, true);
+}
+
+function submitScore(name, auto) {
+var key = state.ticket + "|" + state.odds.value;
+if (state.submittedKey === key) return;
+state.submittedKey = key;
+var btn = $("btn-register");
+btn.disabled = true;
+$("rg-status").textContent = auto? "ランキングに自動登録中…": "登録中…";
+fetch("/api/score", {
+method: "POST",
+headers: { "Content-Type": "application/json"},
+body: JSON.stringify({ name: name, score: state.odds.value, ticket: state.ticket, oddsText: state.odds.text})
+}).then(function (res) {
+return res.json().then(function (j) { return { ok: res.ok, j: j};});
+}).then(function (out) {
+btn.disabled = false;
+if (out.ok && out.j.ok) {
+btn.classList.add("stop");
+if (out.j.updated) {
+$("rg-status").textContent = (auto? "自動で登録したよ！ ": "登録しました！ ") +
+out.j.rank + "位（" + out.j.total + "人中）" + (auto? "": " 次回からは自動で登録されるよ");
+} else {
+$("rg-status").textContent = "自己ベスト " + L.withCommas(String(out.j.best)) + "倍で登録済み（現在" + out.j.rank + "位）";
+}
+} else if (out.j && out.j.error === "ranking_not_ready") {
+$("rg-status").textContent = "ランキングは準備中です";
+state.submittedKey = "";
+} else {
+state.submittedKey = "";
+$("rg-status").textContent = "登録に失敗しました。もう一度試してね";
+}
+}).catch(function () {
+btn.disabled = false;
+state.submittedKey = "";
+$("rg-status").textContent = "登録に失敗しました。通信環境を確認してね";
+});
+}
+
+function esc(s) {
+return String(s).replace(/[&<>"']/g, function (c) {
+return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c];
+});
+}
+function fmtScore(score, oddsText) {
+if (oddsText) return oddsText + "倍";
+return L.withCommas(Math.round(score * 10) / 10) + "倍";
+}
+function rowHtml(no, name, ticket, score, oddsText, me) {
+var tk = ticket? '<span class="tk">' + esc(ticket) + "</span>": "";
+var nm = name? '<span class="nm">' + esc(name) + "</span>": '<span class="nm"></span>';
+return '<div class="rank-row' + (me? " me": "") + '"><span class="no">' + no + "</span>" +
+nm + tk + '<span class="sc">' + fmtScore(score, oddsText) + "</span></div>";
+}
+
+function openRanking() {
+var modal = $("rank-modal");
+modal.hidden = false;
+$("rank-total").textContent = "読み込み中…";
+$("rank-me").innerHTML = "";
+$("rank-list").innerHTML = "";
+var url = "/api/ranking" + (savedName? "?name=" + encodeURIComponent(savedName): "");
+fetch(url).then(function (res) { return res.json();}).then(function (j) {
+if (!j.ok) {
+$("rank-total").textContent = j.error === "ranking_not_ready"? "ランキングは準備中です": "読み込みに失敗しました";
+return;
+}
+$("rank-total").textContent = j.total + "人が登録中";
+if (savedName) {
+var html = '<p class="rank-sec">自分のベスト TOP3</p>';
+if (j.me) {
+html += '<p class="rank-me-info">' + esc(j.me.name) + " さん：現在 " + j.me.rank +
+"位（ベスト " + fmtScore(j.me.best, (j.me.myTop3[0] || {}).oddsText) + "）</p>";
+html += j.me.myTop3.map(function (r, i) {
+return rowHtml((i + 1) + "", "", r.ticket, r.score, r.oddsText, true);
+}).join("");
+} else {
+html += '<p class="rank-me-info">まだ登録がありません。的中したら結果画面から登録してね</p>';
+}
+$("rank-me").innerHTML = html;
+}
+var listHtml = '<p class="rank-sec">全体ランキング TOP10</p>';
+if (!j.entries.length) {
+listHtml += '<p class="rank-empty">まだ登録がありません。最初の登録者になろう！</p>';
+} else {
+listHtml += j.entries.map(function (e) {
+return rowHtml(e.rank + "位", e.name, e.ticket, e.score, e.oddsText, savedName && e.name === savedName);
+}).join("");
+}
+$("rank-list").innerHTML = listHtml;
+}).catch(function () {
+$("rank-total").textContent = "読み込みに失敗しました。通信環境を確認してね";
+});
+}
+
+function copyShare() {
+var text = $("share-preview").textContent;
+function done() { $("copy-note").hidden = false;}
+if (navigator.clipboard && navigator.clipboard.writeText) {
+navigator.clipboard.writeText(text).then(done).catch(function () { fallback();});
+} else { fallback();}
+function fallback() {
+var ta = document.createElement("textarea");
+ta.value = text; document.body.appendChild(ta); ta.select();
+try { document.execCommand("copy");} catch (e) {}
+ta.remove(); done();
+}
+}
+
+/* ================= wiring ================= */
+buildWheel();
+$("btn-start").addEventListener("click", function () { show("screen-stage1");});
+$("btn-spin-wheel").addEventListener("click", spinWheel);
+$("btn-to-stage2").addEventListener("click", startSlot);
+$("btn-spin-slot").addEventListener("click", spinSlot);
+[0, 1, 2].forEach(function (i) {
+$("btn-stop-" + i).addEventListener("click", function () { stopReel(i);});
+});
+$("btn-to-stage3").addEventListener("click", startPoker);
+$("btn-to-result").addEventListener("click", showResult);
+$("btn-again").addEventListener("click", function () {
+state.ticket = null; state.reels = null; state.odds = null; state.hit = null;
+$("btn-register").classList.remove("stop");
+show("screen-stage1");
+$("roulette-result").textContent = "";
+$("btn-to-stage2").hidden = true;
+});
+$("btn-register").addEventListener("click", function () {
+var name = $("rg-name").value.replace(/\s+/g, " ").trim();
+if (!name) { $("rg-status").textContent = "名前を入れてね"; $("rg-name").focus(); return;}
+try { localStorage.setItem("zc_name", name);} catch (e) {}
+savedName = name;
+submitScore(name, false);
+});
+$("btn-copy").addEventListener("click", copyShare);
+$("btn-ranking-start").addEventListener("click", openRanking);
+$("btn-ranking-result").addEventListener("click", openRanking);
+$("btn-rank-close").addEventListener("click", function () { $("rank-modal").hidden = true;});
+$("rank-modal").addEventListener("click", function (ev) {
+if (ev.target === $("rank-modal")) $("rank-modal").hidden = true;
+});
+})();
+</script>
+</body>
+</html>
