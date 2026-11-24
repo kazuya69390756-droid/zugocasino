@@ -59,6 +59,10 @@
   }
   .btn-ghost{ background:transparent; }
   .btn-row{ display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:14px; }
+  .btn-row.col{ flex-direction:column; flex-wrap:nowrap; align-items:stretch; }
+  #btn-to-stage2{ animation:btnblink .9s ease-in-out infinite; }
+  @keyframes btnblink{ 0%,100%{ filter:brightness(1); box-shadow:0 0 0 rgba(212,175,55,0); }
+    50%{ filter:brightness(1.4); box-shadow:0 0 22px rgba(245,217,126,.85); } }
   .hero-img{
     width:150px; height:150px; border-radius:50%; object-fit:cover; display:block; margin:8px auto;
     border:3px solid var(--gold); box-shadow:0 0 34px rgba(212,175,55,.45);
@@ -325,9 +329,9 @@
       </div>
       <div class="legend" id="wheel-legend"></div>
       <div class="stage-result" id="roulette-result"></div>
-      <div class="btn-row">
-        <button class="btn btn-primary" id="btn-spin-wheel" type="button">ルーレットを回す</button>
+      <div class="btn-row col">
         <button class="btn btn-primary" id="btn-to-stage2" type="button" hidden>2ndステージへ</button>
+        <button class="btn btn-primary" id="btn-spin-wheel" type="button">ルーレットを回す</button>
       </div>
     </div>
     <div class="callout" id="callout" hidden></div>
@@ -709,6 +713,7 @@ wheelSpinning = false;
 $("roulette-result").textContent = "券種は「" + state.ticket + "」に決定！";
 $("btn-to-stage2").hidden = false;
 $("btn-spin-wheel").disabled = false;
+$("btn-spin-wheel").textContent = "リベンジする？";
 }, 7700);
 }
 
@@ -1111,6 +1116,7 @@ $("stage1-tag").textContent = "FINAL CHALLENGE";
 $("stage1-desc").textContent = "一発逆転！券種は三連複・三連単・WIN5の3つだけ、各1/3だ。";
 $("roulette-result").textContent = "";
 $("btn-to-stage2").hidden = true;
+$("btn-spin-wheel").textContent = "ルーレットを回す";
 $("ball").hidden = true;
 $("callout").hidden = true;
 show("screen-stage1");
@@ -1143,6 +1149,7 @@ $("btn-register").classList.remove("stop");
 show("screen-stage1");
 $("roulette-result").textContent = "";
 $("btn-to-stage2").hidden = true;
+$("btn-spin-wheel").textContent = "ルーレットを回す";
 });
 $("btn-register").addEventListener("click", function () {
 var name = $("rg-name").value.replace(/\s+/g, " ").trim();
