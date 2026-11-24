@@ -193,7 +193,9 @@
   .confetti{ position:fixed; top:-4vh; z-index:40; pointer-events:none; border-radius:2px;
     animation-name:confettifall; animation-timing-function:linear; animation-fill-mode:forwards; }
   @keyframes confettifall{ to{ transform:translateY(112vh) rotate(720deg); opacity:.85; } }
-  .win-odds{ text-align:center; font-size:1.9rem; font-weight:900; color:#ffe97a; margin-top:16px; line-height:1.35;
+  .win-ticket{ text-align:center; font-size:1.25rem; font-weight:900; color:var(--gold-light);
+    margin-top:16px; margin-bottom:0; letter-spacing:.12em; text-shadow:0 0 12px rgba(212,175,55,.6); }
+  .win-odds{ text-align:center; font-size:1.9rem; font-weight:900; color:#ffe97a; margin-top:4px; line-height:1.35;
     text-shadow:0 0 22px rgba(245,217,126,.85), 0 2px 0 #9a7b1e; animation:winpop .55s ease; }
   @keyframes winpop{ 0%{ transform:scale(.4); opacity:0; } 60%{ transform:scale(1.18); } 100%{ transform:scale(1); opacity:1; } }
   .coin{ position:fixed; top:-7vh; z-index:41; pointer-events:none; border-radius:50%;
@@ -846,7 +848,8 @@ var after = $("poker-after");
 if (state.hit) {
 $("poker-msg").textContent = "♠A！ロイヤルフラッシュ完成！";
 var c = L.celebrateFor(state.odds.value);
-after.innerHTML = '<p class="win-odds">' + state.odds.text + "倍 的中！</p>" +
+after.innerHTML = '<p class="win-ticket">' + state.ticket + "で</p>" +
+'<p class="win-odds">' + state.odds.text + "倍 的中！</p>" +
 '<p class="celebrate-msg" style="font-size:' + (1.02 + c.tier * 0.09) + 'rem;">' +
 c.message + "</p>";
 launchConfetti(c.tier);
