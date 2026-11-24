@@ -80,6 +80,8 @@
     border-top:22px solid var(--red); filter:drop-shadow(0 2px 3px rgba(0,0,0,.6));
   }
   #wheel{ width:100%; height:auto; display:block; filter:drop-shadow(0 12px 24px rgba(0,0,0,.55)); }
+  .win5-pocket{ stroke:#ff2a2a; stroke-width:5px; animation:win5blink .8s steps(1,end) infinite; }
+  @keyframes win5blink{ 0%{ stroke-opacity:1; } 50%{ stroke-opacity:.15; } }
   .ball{ position:absolute; width:20px; height:20px; border-radius:50%; z-index:4; pointer-events:none;
     transform:translate(-50%,-50%);
     background-image:url('assets/zugo.jpg'); background-size:cover; background-position:center;
@@ -618,8 +620,12 @@ var large = sweep > 180? 1: 0;
 path.setAttribute("d", "M " + cx + " " + cy + " L " + p1[0].toFixed(2) + " " + p1[1].toFixed(2) +
 " A " + R + " " + R + " 0 " + large + " 1 " + p2[0].toFixed(2) + " " + p2[1].toFixed(2) + " Z");
 path.setAttribute("fill", WHEEL_COLORS[ticket]);
+if (ticket === "WIN5") {
+path.setAttribute("class", "win5-pocket");
+} else {
 path.setAttribute("stroke", "#0b0b12");
 path.setAttribute("stroke-width", "2");
+}
 svg.appendChild(path);
 var mid = start + sweep / 2;
 var tp = polar(cx, cy, rText, mid);
