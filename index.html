@@ -12,7 +12,7 @@
     --felt:#14532d;
   }
   *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  html,body{ margin:0; padding:0; }
+  html,body{ margin:0; padding:0; overflow-x:hidden; }
   body{
     background:radial-gradient(1200px 600px at 50% -10%, #2a2140 0%, var(--bg) 55%) fixed, var(--bg);
     color:var(--text);
@@ -68,7 +68,10 @@
   .steps b{ color:var(--gold-light); }
 
   /* ---------- 1st: roulette ---------- */
-  .wheel-wrap{ position:relative; width:min(86vw,340px); margin:10px auto 4px; }
+  .wheel-wrap{ position:relative; width:min(86vw,340px); margin:10px auto 4px;
+    transition:transform .5s ease; }
+  /* Cut-in on the deciding moment: zoom right into the top pocket. */
+  .wheel-wrap.zoom-in{ transform:scale(1.9); transform-origin:50% 9%; z-index:6; }
   .wheel-pointer{
     position:absolute; left:50%; top:-8px; transform:translateX(-50%); z-index:3;
     width:0; height:0; border-left:13px solid transparent; border-right:13px solid transparent;
@@ -629,15 +632,21 @@ var current = ((wheelRotation % 360) + 360) % 360;
 var delta = (target - current + 360) % 360;
 wheelRotation += 360 * 6 + delta;
 var wheel = $("wheel");
-wheel.style.transition = "transform 5.8s cubic-bezier(.12,.8,.08,1)";
+wheel.style.transition = "transform 6.4s cubic-bezier(.12,.8,.08,1)";
 wheel.style.transform = "rotate(" + wheelRotation + "deg)";
 spinBall();
+var wrap = wheel.parentElement;
+wrap.classList.remove("zoom-in");
+// Cut-in: as the ball starts dropping toward the winning pocket,
+// zoom into the top of the wheel and let the settle play out big.
+setTimeout(function () { wrap.classList.add("zoom-in"); }, 4300);
+setTimeout(function () { wrap.classList.remove("zoom-in"); }, 7150);
 setTimeout(function () {
 wheelSpinning = false;
 $("roulette-result").textContent = "券種は「" + state.ticket + "」に決定！";
 $("btn-to-stage2").hidden = false;
 $("btn-spin-wheel").disabled = false;
-}, 5950);
+}, 7700);
 }
 
 // The ball runs the other way around the outer track, slows down,
@@ -649,7 +658,7 @@ var wrap = ball.parentElement;
 var W = wrap.clientWidth;
 var C = W / 2;
 var rOut = W * 0.465, rIn = W * 0.41;
-var DUR = 5800, TURNS = 5;
+var DUR = 6400, TURNS = 5;
 ball.hidden = false;
 function place(angleDeg, r) {
 var rad = angleDeg * Math.PI / 180;
@@ -669,7 +678,7 @@ r = rOut;
 } else {
 var q = (p - 0.55) / 0.45;
 var smooth = q * q * (3 - 2 * q);
-r = rOut + (rIn - rOut) * smooth + Math.sin(q * Math.PI * 3) * 7 * (1 - q);
+r = rOut + (rIn - rOut) * smooth + Math.sin(q * Math.PI * 2) * 8 * (1 - q);
 }
 place(angle, r);
 if (p < 1) requestAnimationFrame(frame);
@@ -1030,6 +1039,7 @@ $("btn-to-result").addEventListener("click", showResult);
 $("btn-again").addEventListener("click", function () {
 buildWheel();
 $("ball").hidden = true;
+$("wheel").parentElement.classList.remove("zoom-in");
 state.ticket = null; state.reels = null; state.odds = null; state.hit = null;
 $("btn-register").classList.remove("stop");
 show("screen-stage1");
