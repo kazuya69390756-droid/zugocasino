@@ -301,7 +301,7 @@
     <div class="panel">
       <span class="stage-tag">1st STAGE</span>
       <h2 class="stage-title">ルーレット「買い目を決めろ」</h2>
-      <p class="stage-desc">カジノルーレットで券種を1回抽選。WIN5は全体の1％、激レアだ。</p>
+      <p class="stage-desc">カジノルーレットで券種を1回抽選。WIN5は全体の1.2％、激レアだ。</p>
       <div class="wheel-wrap">
         <div class="wheel-pointer"></div>
         <svg id="wheel" viewBox="0 0 340 340" role="img" aria-label="券種ルーレット"></svg>
@@ -442,11 +442,11 @@ var ZC_LOGIC = (function () {
 
 // 1st roulette: ticket weights (percent). Sum = 100.
 var ROULETTE = [
-{ ticket: "単勝", weight: 24.75},
-{ ticket: "馬連", weight: 24.75},
-{ ticket: "三連複", weight: 24.75},
-{ ticket: "三連単", weight: 24.75},
-{ ticket: "WIN5", weight: 1}
+{ ticket: "単勝", weight: 24.7},
+{ ticket: "馬連", weight: 24.7},
+{ ticket: "三連複", weight: 24.7},
+{ ticket: "三連単", weight: 24.7},
+{ ticket: "WIN5", weight: 1.2}
 ];
 
 function range(a, b) { var r = []; for (var i = a; i <= b; i++) r.push(String(i)); return r;}
@@ -572,8 +572,8 @@ var svg = $("wheel");
 var NS = "http://www.w3.org/2000/svg";
 svg.innerHTML = "";
 var cx = 170, cy = 170, R = 164, rText = 112;
-// Fine pockets: each main ticket gets 5 equal pockets (5 x 17.82deg
-// = 89.1deg = 24.75%), WIN5 keeps its single 3.6deg (1%) pocket.
+// Fine pockets: each main ticket gets 5 equal pockets (5 x 17.784deg
+// = 88.92deg = 24.7%), WIN5 keeps its single 4.32deg (1.2%) pocket.
 // Arrangement: the 4 main tickets take turns one by one in a fixed
 // rotation (base order shuffled each build, repeated 5 rounds), so
 // the same ticket never sits in adjacent pockets. WIN5 goes anywhere.
@@ -589,7 +589,8 @@ seq.splice(Math.floor(Math.random() * (seq.length + 1)), 0, "WIN5");
 wheelPockets = [];
 var start = 0;
 seq.forEach(function (ticket) {
-var sweep = ticket === "WIN5"? 3.6: (360 - 3.6) / 20;
+var win5Sweep = L.ROULETTE.filter(function (s) { return s.ticket === "WIN5"; })[0].weight * 3.6;
+var sweep = ticket === "WIN5"? win5Sweep: (360 - win5Sweep) / 20;
 var end = start + sweep;
 var p1 = polar(cx, cy, R, start), p2 = polar(cx, cy, R, end);
 var path = document.createElementNS(NS, "path");
