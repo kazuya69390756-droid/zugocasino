@@ -549,14 +549,17 @@ svg.innerHTML = "";
 var cx = 170, cy = 170, R = 164, rText = 112;
 // Fine pockets: each main ticket gets 5 equal pockets (5 x 17.82deg
 // = 89.1deg = 24.75%), WIN5 keeps its single 3.6deg (1%) pocket.
-// The pocket order is shuffled every time the wheel is built.
+// Arrangement: the 4 main tickets take turns one by one in a fixed
+// rotation (base order shuffled each build, repeated 5 rounds), so
+// the same ticket never sits in adjacent pockets. WIN5 goes anywhere.
 var mainTickets = ["単勝", "馬連", "三連複", "三連単"];
-var seq = [];
-mainTickets.forEach(function (t) { for (var i = 0; i < 5; i++) seq.push(t); });
-for (var i = seq.length - 1; i > 0; i--) {
+var base = mainTickets.slice();
+for (var i = base.length - 1; i > 0; i--) {
 var j = Math.floor(Math.random() * (i + 1));
-var tmp = seq[i]; seq[i] = seq[j]; seq[j] = tmp;
+var tmp = base[i]; base[i] = base[j]; base[j] = tmp;
 }
+var seq = [];
+for (var r = 0; r < 5; r++) base.forEach(function (t) { seq.push(t); });
 seq.splice(Math.floor(Math.random() * (seq.length + 1)), 0, "WIN5");
 wheelPockets = [];
 var start = 0;
