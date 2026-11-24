@@ -541,21 +541,34 @@ function polar(cx, cy, r, deg) {
 var rad = (deg - 90) * Math.PI / 180;
 return [cx + r * Math.cos(rad), cy + r * Math.sin(rad)];
 }
+var wheelPockets = [];
 function buildWheel() {
 var svg = $("wheel");
 var NS = "http://www.w3.org/2000/svg";
 svg.innerHTML = "";
-var cx = 170, cy = 170, R = 164, rText = 108;
+var cx = 170, cy = 170, R = 164, rText = 112;
+// Fine pockets: each main ticket gets 5 equal pockets (5 x 17.82deg
+// = 89.1deg = 24.75%), WIN5 keeps its single 3.6deg (1%) pocket.
+// The pocket order is shuffled every time the wheel is built.
+var mainTickets = ["単勝", "馬連", "三連複", "三連単"];
+var seq = [];
+mainTickets.forEach(function (t) { for (var i = 0; i < 5; i++) seq.push(t); });
+for (var i = seq.length - 1; i > 0; i--) {
+var j = Math.floor(Math.random() * (i + 1));
+var tmp = seq[i]; seq[i] = seq[j]; seq[j] = tmp;
+}
+seq.splice(Math.floor(Math.random() * (seq.length + 1)), 0, "WIN5");
+wheelPockets = [];
 var start = 0;
-L.ROULETTE.forEach(function (seg) {
-var sweep = seg.weight * 3.6;
+seq.forEach(function (ticket) {
+var sweep = ticket === "WIN5"? 3.6: (360 - 3.6) / 20;
 var end = start + sweep;
 var p1 = polar(cx, cy, R, start), p2 = polar(cx, cy, R, end);
 var path = document.createElementNS(NS, "path");
 var large = sweep > 180? 1: 0;
 path.setAttribute("d", "M " + cx + " " + cy + " L " + p1[0].toFixed(2) + " " + p1[1].toFixed(2) +
 " A " + R + " " + R + " 0 " + large + " 1 " + p2[0].toFixed(2) + " " + p2[1].toFixed(2) + " Z");
-path.setAttribute("fill", WHEEL_COLORS[seg.ticket]);
+path.setAttribute("fill", WHEEL_COLORS[ticket]);
 path.setAttribute("stroke", "#0b0b12");
 path.setAttribute("stroke-width", "2");
 svg.appendChild(path);
@@ -564,14 +577,14 @@ var tp = polar(cx, cy, rText, mid);
 var text = document.createElementNS(NS, "text");
 text.setAttribute("x", tp[0]); text.setAttribute("y", tp[1]);
 text.setAttribute("fill", "#fff");
-text.setAttribute("font-size", seg.ticket === "WIN5"? "10": "19");
+text.setAttribute("font-size", ticket === "WIN5"? "10": "11");
 text.setAttribute("font-weight", "900");
 text.setAttribute("text-anchor", "middle");
 text.setAttribute("dominant-baseline", "middle");
 text.setAttribute("transform", "rotate(" + mid + " " + tp[0] + " " + tp[1] + ")");
-text.textContent = seg.ticket;
+text.textContent = ticket;
 svg.appendChild(text);
-seg._center = mid;
+wheelPockets.push({ ticket: ticket, center: mid });
 start = end;
 });
 var hub = document.createElementNS(NS, "circle");
@@ -598,11 +611,12 @@ $("btn-spin-wheel").disabled = true;
 $("btn-to-stage2").hidden = true;
 $("roulette-result").textContent = "";
 state.ticket = L.pickTicket();
-var seg = null;
-L.ROULETTE.forEach(function (s) { if (s.ticket === state.ticket) seg = s;});
-// Land the segment center on the top pointer. Wheel coords: segment
+// Land on a random pocket of the drawn ticket type.
+var cands = wheelPockets.filter(function (p) { return p.ticket === state.ticket; });
+var pocket = cands[Math.floor(Math.random() * cands.length)];
+// Land the pocket center on the top pointer. Wheel coords: pocket
 // centers are measured clockwise from the top, so rotate by -center.
-var target = (360 - seg._center) % 360;
+var target = (360 - pocket.center) % 360;
 var current = ((wheelRotation % 360) + 360) % 360;
 var delta = (target - current + 360) % 360;
 wheelRotation += 360 * 6 + delta;
@@ -967,6 +981,7 @@ $("btn-stop-" + i).addEventListener("click", function () { stopReel(i);});
 $("btn-to-stage3").addEventListener("click", startPoker);
 $("btn-to-result").addEventListener("click", showResult);
 $("btn-again").addEventListener("click", function () {
+buildWheel();
 state.ticket = null; state.reels = null; state.odds = null; state.hit = null;
 $("btn-register").classList.remove("stop");
 show("screen-stage1");
