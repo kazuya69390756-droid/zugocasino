@@ -202,6 +202,21 @@
     animation-name:coinfall; animation-timing-function:ease-in; animation-fill-mode:forwards; }
   @keyframes coinfall{ to{ transform:translateY(118vh) rotateY(720deg) rotate(50deg); opacity:.92; } }
 
+  /* ---------- roulette callout cut-in ---------- */
+  .callout{ position:fixed; left:50%; top:27%; z-index:60; pointer-events:none;
+    transform:translate(-50%,-50%) rotate(-4deg);
+    font-size:clamp(1.5rem, 7.2vw, 2.7rem); font-weight:900; letter-spacing:.04em; white-space:nowrap;
+    color:#ffe97a; background:rgba(10,8,4,.72); border:3px solid var(--gold); border-radius:14px;
+    padding:.35em .7em; box-shadow:0 10px 34px rgba(0,0,0,.6), 0 0 26px rgba(212,175,55,.45);
+    text-shadow:0 2px 0 #9a7b1e, 0 0 16px rgba(245,217,126,.8);
+    animation:callout-pop .35s ease; }
+  .callout.win5{ color:#ff6b6b; border-color:#ff8787; font-size:clamp(1.4rem, 6.6vw, 2.5rem);
+    text-shadow:0 2px 0 #7a1010, 0 0 18px rgba(255,107,107,.85);
+    box-shadow:0 10px 34px rgba(0,0,0,.6), 0 0 30px rgba(224,49,49,.55); }
+  @keyframes callout-pop{ 0%{ transform:translate(-50%,-50%) rotate(-4deg) scale(.3); opacity:0; }
+    60%{ transform:translate(-50%,-50%) rotate(-4deg) scale(1.15); opacity:1; }
+    100%{ transform:translate(-50%,-50%) rotate(-4deg) scale(1); opacity:1; } }
+
   /* ---------- result / ranking / share ---------- */
   .result-hero{ text-align:center; }
   .result-hero .ticket{ font-size:1.15rem; color:var(--muted); letter-spacing:.1em; }
@@ -299,6 +314,7 @@
         <button class="btn btn-primary" id="btn-to-stage2" type="button" hidden>2ndステージへ</button>
       </div>
     </div>
+    <div class="callout" id="callout" hidden></div>
   </section>
 
   <!-- ===== 2nd slot ===== -->
@@ -638,10 +654,22 @@ wheel.style.transform = "rotate(" + wheelRotation + "deg)";
 spinBall();
 var wrap = wheel.parentElement;
 wrap.classList.remove("zoom-in");
+$("callout").hidden = true;
 // Cut-in: as the ball starts dropping toward the winning pocket,
 // zoom into the top of the wheel and let the settle play out big.
-setTimeout(function () { wrap.classList.add("zoom-in"); }, 4300);
-setTimeout(function () { wrap.classList.remove("zoom-in"); }, 7150);
+// Big-ticket pockets get a shout cut-in at the same moment.
+var CALLOUTS = { "三連複": "来てるよ！来てるよ！", "三連単": "いっけーーーーー！", "WIN5": "これはもしかして・・・！？" };
+setTimeout(function () {
+wrap.classList.add("zoom-in");
+var msg = CALLOUTS[state.ticket];
+if (msg) {
+var co = $("callout");
+co.textContent = msg;
+co.className = "callout" + (state.ticket === "WIN5"? " win5": "");
+co.hidden = false;
+}
+}, 4300);
+setTimeout(function () { wrap.classList.remove("zoom-in"); $("callout").hidden = true; }, 7150);
 setTimeout(function () {
 wheelSpinning = false;
 $("roulette-result").textContent = "券種は「" + state.ticket + "」に決定！";
@@ -1041,6 +1069,7 @@ $("btn-to-result").addEventListener("click", showResult);
 $("btn-again").addEventListener("click", function () {
 buildWheel();
 $("ball").hidden = true;
+$("callout").hidden = true;
 $("wheel").parentElement.classList.remove("zoom-in");
 state.ticket = null; state.reels = null; state.odds = null; state.hit = null;
 $("btn-register").classList.remove("stop");
