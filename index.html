@@ -287,6 +287,7 @@
   .rank-row .no{ font-weight:900; color:var(--gold-light); min-width:2.6em; }
   .rank-row .nm{ flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .rank-row .tk{ color:var(--muted); font-size:.8rem; }
+  .rank-row .dt{ color:var(--muted); font-size:.75rem; white-space:nowrap; }
   .rank-row .sc{ font-weight:900; }
   .rank-total,.rank-me-info,.rank-empty{ color:var(--muted); font-size:.88rem; }
   footer{ text-align:center; color:var(--muted); font-size:.75rem; margin-top:22px; }
@@ -1044,11 +1045,17 @@ function fmtScore(score, oddsText) {
 if (oddsText) return oddsText + "倍";
 return L.withCommas(Math.round(score * 10) / 10) + "倍";
 }
-function rowHtml(no, name, ticket, score, oddsText, me) {
+function fmtDate(ts) {
+if (!ts) return "";
+var d = new Date(ts + 9 * 3600 * 1000); // JST
+return (d.getUTCMonth() + 1) + "/" + d.getUTCDate();
+}
+function rowHtml(no, name, ticket, score, oddsText, me, dateText) {
 var tk = ticket? '<span class="tk">' + esc(ticket) + "</span>": "";
 var nm = name? '<span class="nm">' + esc(name) + "</span>": '<span class="nm"></span>';
+var dt = dateText? '<span class="dt">' + esc(dateText) + "</span>": "";
 return '<div class="rank-row' + (me? " me": "") + '"><span class="no">' + no + "</span>" +
-nm + tk + '<span class="sc">' + fmtScore(score, oddsText) + "</span></div>";
+nm + tk + dt + '<span class="sc">' + fmtScore(score, oddsText) + "</span></div>";
 }
 
 function openRanking() {
@@ -1070,20 +1077,20 @@ if (j.me) {
 html += '<p class="rank-me-info">生涯総合では' + (j.me.rank? "現在 " + j.me.rank + "位": "250位以下") +
 "（ベスト " + fmtScore(j.me.best, (j.me.myTop10[0] || {}).oddsText) + "）</p>";
 html += j.me.myTop10.map(function (r, i) {
-return rowHtml((i + 1) + "", "", r.ticket, r.score, r.oddsText, true);
+return rowHtml((i + 1) + "", "", r.ticket, r.score, r.oddsText, true, fmtDate(r.ts));
 }).join("");
 } else {
 html += '<p class="rank-me-info">まだ登録がありません。的中したら結果画面から登録してね</p>';
 }
 $("rank-me").innerHTML = html;
 }
-function boardSection(title, entries, showTicket) {
+function boardSection(title, entries, showTicket, showDate) {
 var h = '<p class="rank-sec">' + title + "</p>";
 if (!entries || !entries.length) {
 h += '<p class="rank-empty">まだ登録がありません</p>';
 } else {
 h += entries.map(function (e) {
-return rowHtml(e.rank + "位", e.name, showTicket? e.ticket: "", e.score, e.oddsText, savedName && e.name === savedName);
+return rowHtml(e.rank + "位", e.name, showTicket? e.ticket: "", e.score, e.oddsText, savedName && e.name === savedName, showDate? fmtDate(e.ts): "");
 }).join("");
 }
 return h;
@@ -1093,7 +1100,7 @@ var ticketBoards = j.tickets || {};
 ["単勝", "馬連", "三連複", "三連単"].forEach(function (t) {
 listHtml += boardSection(t + " ランキング TOP5", ticketBoards[t], false);
 });
-listHtml += boardSection("今週の総合ランキング TOP10", j.weekly, true);
+listHtml += boardSection("今週の総合ランキング TOP10", j.weekly, true, true);
 $("rank-list").innerHTML = listHtml;
 }).catch(function () {
 $("rank-total").textContent = "読み込みに失敗しました。通信環境を確認してね";
