@@ -593,10 +593,11 @@ var NS = "http://www.w3.org/2000/svg";
 svg.innerHTML = "";
 var cx = 170, cy = 170, R = 164, rText = 112;
 // Fine pockets: each main ticket gets 5 equal pockets (5 x 15.58deg
-// = 77.9deg = 21.64%), WIN5 keeps its single 48.41deg (13.45%) pocket.
+// = 77.9deg = 21.64%). WIN5 (13.45% = 48.41deg) is split into 3 equal
+// pockets of 16.14deg, scattered evenly around the wheel.
 // Arrangement: the 4 main tickets take turns one by one in a fixed
 // rotation (base order shuffled each build, repeated 5 rounds), so
-// the same ticket never sits in adjacent pockets. WIN5 goes anywhere.
+// the same ticket never sits in adjacent pockets.
 var finalMode = !!state.inFinal;
 var mainTickets = finalMode? ["三連複", "三連単", "WIN5"]: ["単勝", "馬連", "三連複", "三連単"];
 var base = mainTickets.slice();
@@ -609,14 +610,23 @@ if (finalMode) {
 // Final challenge: 12 equal pockets, 4 per ticket (each ticket 1/3).
 for (var r2 = 0; r2 < 4; r2++) base.forEach(function (t) { seq.push(t); });
 } else {
-for (var r = 0; r < 5; r++) base.forEach(function (t) { seq.push(t); });
-seq.splice(Math.floor(Math.random() * (seq.length + 1)), 0, "WIN5");
+var mains = [];
+for (var r = 0; r < 5; r++) base.forEach(function (t) { mains.push(t); });
+// Rotate the main-pocket order by a random offset for variety, then
+// scatter the 3 WIN5 pockets evenly (groups of 7 / 7 / 6 mains).
+var off = Math.floor(Math.random() * mains.length);
+mains = mains.slice(off).concat(mains.slice(0, off));
+var mi = 0;
+[7, 7, 6].forEach(function (g) {
+for (var k = 0; k < g; k++) seq.push(mains[mi++]);
+seq.push("WIN5");
+});
 }
 wheelPockets = [];
 var start = 0;
 seq.forEach(function (ticket) {
 var win5Sweep = L.ROULETTE.filter(function (s) { return s.ticket === "WIN5"; })[0].weight * 3.6;
-var sweep = finalMode? 30: (ticket === "WIN5"? win5Sweep: (360 - win5Sweep) / 20);
+var sweep = finalMode? 30: (ticket === "WIN5"? win5Sweep / 3: (360 - win5Sweep) / 20);
 var end = start + sweep;
 var p1 = polar(cx, cy, R, start), p2 = polar(cx, cy, R, end);
 var path = document.createElementNS(NS, "path");
