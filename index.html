@@ -973,7 +973,7 @@ var lines = [
 "オッズ：" + state.odds.text + "倍"
 ];
 if (state.hit) {
-lines.push("結果：的中！ロイヤルフラッシュ完成！");
+lines.push("的中！" + L.withCommas(Math.round(state.odds.value * 100)) + "円ゲット！");
 lines.push(L.celebrateFor(state.odds.value).message);
 } else {
 lines.push("結果：外れ… ♦2");
