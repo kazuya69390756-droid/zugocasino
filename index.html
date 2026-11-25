@@ -204,6 +204,8 @@
   .win-odds{ text-align:center; font-size:1.9rem; font-weight:900; color:#ffe97a; margin-top:4px; line-height:1.35;
     text-shadow:0 0 22px rgba(245,217,126,.85), 0 2px 0 #9a7b1e; animation:winpop .55s ease; }
   @keyframes winpop{ 0%{ transform:scale(.4); opacity:0; } 60%{ transform:scale(1.18); } 100%{ transform:scale(1); opacity:1; } }
+  .win-yen{ text-align:center; font-size:1.45rem; font-weight:900; color:var(--gold-light); margin-top:8px; line-height:1.35;
+    text-shadow:0 0 16px rgba(212,175,55,.7); animation:winpop .55s ease .15s both; }
   .coin{ position:fixed; top:-7vh; z-index:41; pointer-events:none; border-radius:50%;
     background:radial-gradient(circle at 35% 32%, #fff6bf, #f5d97e 42%, #d4af37 72%, #9a7b1e);
     border:2px solid #8a6d1f; color:#7a5c00; font-weight:900;
@@ -904,6 +906,7 @@ $("poker-msg").textContent = "♠A！ロイヤルフラッシュ完成！";
 var c = L.celebrateFor(state.odds.value);
 after.innerHTML = '<p class="win-ticket">' + state.ticket + "で</p>" +
 '<p class="win-odds">' + state.odds.text + "倍 的中！</p>" +
+'<p class="win-yen">' + L.withCommas(Math.round(state.odds.value * 100)) + "円ゲット！</p>" +
 '<p class="celebrate-msg" style="font-size:' + (1.02 + c.tier * 0.09) + 'rem;">' +
 c.message + "</p>";
 launchConfetti(c.tier);
