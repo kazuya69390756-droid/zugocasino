@@ -280,17 +280,20 @@
   .modal-head h2{ margin:0; font-size:1.2rem; }
   .rank-sec{ font-weight:900; color:var(--gold-light); margin:16px 0 8px; }
   .rank-row{
-    display:flex; align-items:center; gap:8px; padding:8px 10px; border-radius:10px;
+    display:flex; align-items:center; gap:6px; padding:8px; border-radius:10px;
     background:rgba(255,255,255,.04); margin-bottom:6px; font-size:.92rem;
   }
   .rank-row.me{ background:rgba(212,175,55,.18); border:1px solid rgba(212,175,55,.5); }
-  .rank-row .no{ font-weight:900; color:var(--gold-light); min-width:2.6em; }
-  .rank-row .nm{ flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .rank-row .tk{ color:var(--muted); font-size:.8rem; }
+  .rank-row .no{ font-weight:900; color:var(--gold-light); min-width:2.3em; }
+  .rank-row .nm{ flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:.88rem; }
+  .rank-row .meta{ display:flex; flex-direction:column; line-height:1.3; flex-shrink:0; }
+  .rank-row .tk{ color:var(--muted); font-size:.8rem; white-space:nowrap; }
   .rank-row .dt{ color:var(--muted); font-size:.75rem; white-space:nowrap; }
-  .rank-row .pay{ color:var(--muted); font-size:.78rem; font-weight:400; white-space:nowrap; }
   .result-hero .payout{ margin-top:6px; font-size:1.05rem; font-weight:700; color:var(--gold-light); }
-  .rank-row .sc{ font-weight:900; }
+  .rank-row .sc{ display:flex; flex-direction:column; align-items:flex-end; line-height:1.3; flex-shrink:0; }
+  .rank-row .sc .pay{ font-weight:900; font-size:.94rem; color:var(--gold-light); white-space:nowrap; }
+  .rank-row .sc .odds{ color:var(--muted); font-size:.75rem; font-weight:400; white-space:nowrap; }
+  .pay-inline{ color:var(--muted); font-size:.85em; white-space:nowrap; }
   .rank-total,.rank-me-info,.rank-empty{ color:var(--muted); font-size:.88rem; }
   footer{ text-align:center; color:var(--muted); font-size:.75rem; margin-top:22px; }
 </style>
@@ -1050,9 +1053,11 @@ return String(s).replace(/[&<>"']/g, function (c) {
 return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c];
 });
 }
-function fmtScore(score, oddsText) {
+function fmtScore(score, oddsText, inline) {
 var base = oddsText? oddsText + "倍": L.withCommas(Math.round(score * 10) / 10) + "倍";
-return base + ' <span class="pay">' + L.withCommas(Math.round(score * 100)) + "円</span>";
+var yen = L.withCommas(Math.round(score * 100)) + "円";
+if (inline) return base + ' <span class="pay-inline">' + yen + "</span>";
+return '<span class="pay">' + yen + '</span><span class="odds">' + base + "</span>";
 }
 function fmtDate(ts) {
 if (!ts) return "";
@@ -1063,8 +1068,9 @@ function rowHtml(no, name, ticket, score, oddsText, me, dateText) {
 var tk = ticket? '<span class="tk">' + esc(ticket) + "</span>": "";
 var nm = name? '<span class="nm">' + esc(name) + "</span>": '<span class="nm"></span>';
 var dt = dateText? '<span class="dt">' + esc(dateText) + "</span>": "";
+var meta = (tk || dt)? '<span class="meta">' + tk + dt + "</span>": "";
 return '<div class="rank-row' + (me? " me": "") + '"><span class="no">' + no + "</span>" +
-nm + tk + dt + '<span class="sc">' + fmtScore(score, oddsText) + "</span></div>";
+nm + meta + '<span class="sc">' + fmtScore(score, oddsText) + "</span></div>";
 }
 
 function openRanking() {
@@ -1092,7 +1098,7 @@ html += '<p class="rank-me-info">今日はまだ的中がありません</p>';
 html += '<p class="rank-sec">' + esc(savedName) + 'さんの生涯獲得ランキング TOP5</p>';
 if (j.me && j.me.myTop10 && j.me.myTop10.length) {
 html += '<p class="rank-me-info">生涯総合では' + (j.me.rank? "現在 " + j.me.rank + "位": "250位以下") +
-"（ベスト " + fmtScore(j.me.best, (j.me.myTop10[0] || {}).oddsText) + "）</p>";
+"（ベスト " + fmtScore(j.me.best, (j.me.myTop10[0] || {}).oddsText, true) + "）</p>";
 html += j.me.myTop10.slice(0, 5).map(function (r, i) {
 return rowHtml((i + 1) + "", "", r.ticket, r.score, r.oddsText, true, fmtDate(r.ts));
 }).join("");
