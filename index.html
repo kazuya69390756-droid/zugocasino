@@ -592,7 +592,7 @@ var svg = $("wheel");
 var NS = "http://www.w3.org/2000/svg";
 svg.innerHTML = "";
 var cx = 170, cy = 170, R = 164, rText = 112;
-// Fine pockets: each main ticket gets 5 equal pockets (5 x 15.58deg
+// Fine pockets: each main ticket gets 4 equal pockets (4 x 19.47deg
 // = 77.9deg = 21.64%). WIN5 (13.45% = 48.41deg) is split into 3 equal
 // pockets of 16.14deg, scattered evenly around the wheel.
 // Arrangement: the 4 main tickets take turns one by one in a fixed
@@ -611,13 +611,13 @@ if (finalMode) {
 for (var r2 = 0; r2 < 4; r2++) base.forEach(function (t) { seq.push(t); });
 } else {
 var mains = [];
-for (var r = 0; r < 5; r++) base.forEach(function (t) { mains.push(t); });
+for (var r = 0; r < 4; r++) base.forEach(function (t) { mains.push(t); });
 // Rotate the main-pocket order by a random offset for variety, then
-// scatter the 3 WIN5 pockets evenly (groups of 7 / 7 / 6 mains).
+// scatter the 3 WIN5 pockets evenly (groups of 6 / 5 / 5 mains).
 var off = Math.floor(Math.random() * mains.length);
 mains = mains.slice(off).concat(mains.slice(0, off));
 var mi = 0;
-[7, 7, 6].forEach(function (g) {
+[6, 5, 5].forEach(function (g) {
 for (var k = 0; k < g; k++) seq.push(mains[mi++]);
 seq.push("WIN5");
 });
@@ -626,7 +626,7 @@ wheelPockets = [];
 var start = 0;
 seq.forEach(function (ticket) {
 var win5Sweep = L.ROULETTE.filter(function (s) { return s.ticket === "WIN5"; })[0].weight * 3.6;
-var sweep = finalMode? 30: (ticket === "WIN5"? win5Sweep / 3: (360 - win5Sweep) / 20);
+var sweep = finalMode? 30: (ticket === "WIN5"? win5Sweep / 3: (360 - win5Sweep) / 16);
 var end = start + sweep;
 var p1 = polar(cx, cy, R, start), p2 = polar(cx, cy, R, end);
 var path = document.createElementNS(NS, "path");
