@@ -59,7 +59,11 @@ module.exports = async (req, res) => {
     const now = Date.now();
     const total = await redisCmd(['ZCARD', RANK_KEY]);
     const entries = await readBoard(RANK_KEY, DETAIL_KEY, 10);
-    const dk = dailyKey(now);
+    // ?date=YYYY-MM-DD (JST) reads that day's daily board instead of today's
+    // (used for the morning post that reports yesterday's final ranking).
+    const dateParam = typeof req.query?.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(req.query.date)
+      ? req.query.date : null;
+    const dk = dateParam ? 'zc:daily:' + dateParam : dailyKey(now);
     const daily = await readBoard(dk, dk + ':detail', 10);
     const wk = weeklyKey(now);
     const weekly = await readBoard(wk, wk + ':detail', 10);
