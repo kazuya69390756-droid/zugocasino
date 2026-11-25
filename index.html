@@ -484,7 +484,7 @@ return { left: range(0, 3), mid: range(1, 9), right: range(0, 9)};
 case "三連単":
 return { left: range(0, 9), mid: range(1, 9), right: range(0, 9).concat(["00", "25"])};
 case "WIN5":
-return { left: range(0, 9), mid: range(1, 9), right: ["2525", "252525", "25252525"]};
+return { left: range(0, 9), mid: range(1, 9), right: ["2525", "252525"]};
 default:
 return null;
 }
