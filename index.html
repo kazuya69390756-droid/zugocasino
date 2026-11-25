@@ -1089,11 +1089,11 @@ return rowHtml(e.rank + "位", e.name, showTicket? e.ticket: "", e.score, e.odds
 return h;
 }
 var listHtml = boardSection("本日の総合ランキング TOP10", j.daily, true);
-listHtml += boardSection("今週の総合ランキング TOP10", j.weekly, true);
 var ticketBoards = j.tickets || {};
 ["単勝", "馬連", "三連複", "三連単"].forEach(function (t) {
 listHtml += boardSection(t + " ランキング TOP5", ticketBoards[t], false);
 });
+listHtml += boardSection("今週の総合ランキング TOP10", j.weekly, true);
 $("rank-list").innerHTML = listHtml;
 }).catch(function () {
 $("rank-total").textContent = "読み込みに失敗しました。通信環境を確認してね";
