@@ -288,6 +288,8 @@
   .rank-row .nm{ flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .rank-row .tk{ color:var(--muted); font-size:.8rem; }
   .rank-row .dt{ color:var(--muted); font-size:.75rem; white-space:nowrap; }
+  .rank-row .pay{ color:var(--muted); font-size:.78rem; font-weight:400; white-space:nowrap; }
+  .result-hero .payout{ margin-top:6px; font-size:1.05rem; font-weight:700; color:var(--gold-light); }
   .rank-row .sc{ font-weight:900; }
   .rank-total,.rank-me-info,.rank-empty{ color:var(--muted); font-size:.88rem; }
   footer{ text-align:center; color:var(--muted); font-size:.75rem; margin-top:22px; }
@@ -413,6 +415,7 @@
         <div class="ticket" id="r-ticket"></div>
         <div class="odds" id="r-odds"></div>
         <div class="outcome" id="r-outcome"></div>
+        <div class="payout" id="r-payout"></div>
       </div>
       <div id="r-celebrate"></div>
       <div class="rank-form" id="rank-form">
@@ -985,6 +988,7 @@ var oc = $("r-outcome");
 if (state.hit) {
 oc.textContent = "的中！ロイヤルフラッシュ完成！";
 oc.className = "outcome hit";
+$("r-payout").textContent = "100円買ってたら、払い戻しは" + L.withCommas(Math.round(state.odds.value * 100)) + "円でした";
 var c = L.celebrateFor(state.odds.value);
 $("r-celebrate").innerHTML = '<p class="celebrate-msg" style="font-size:' +
 (1.02 + c.tier * 0.09) + 'rem;">' + c.message + "</p>";
@@ -992,6 +996,7 @@ $("rank-form").style.display = "";
 } else {
 oc.textContent = "外れ… ♦2";
 oc.className = "outcome miss";
+$("r-payout").textContent = "";
 $("r-celebrate").innerHTML = "";
 $("rank-form").style.display = "none"; // misses are not ranked
 }
@@ -1046,8 +1051,8 @@ return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]
 });
 }
 function fmtScore(score, oddsText) {
-if (oddsText) return oddsText + "倍";
-return L.withCommas(Math.round(score * 10) / 10) + "倍";
+var base = oddsText? oddsText + "倍": L.withCommas(Math.round(score * 10) / 10) + "倍";
+return base + ' <span class="pay">' + L.withCommas(Math.round(score * 100)) + "円</span>";
 }
 function fmtDate(ts) {
 if (!ts) return "";
