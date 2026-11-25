@@ -723,8 +723,12 @@ setTimeout(function () {
 wheelSpinning = false;
 $("roulette-result").textContent = "券種は「" + state.ticket + "」に決定！";
 $("btn-to-stage2").hidden = false;
+if (state.inFinal) {
+$("btn-spin-wheel").hidden = true; // Final Challenge: no re-draw
+} else {
 $("btn-spin-wheel").disabled = false;
 $("btn-spin-wheel").textContent = "リベンジする？";
+}
 }, 7700);
 }
 
@@ -1168,6 +1172,8 @@ $("stage1-tag").textContent = "FINAL CHALLENGE";
 $("stage1-desc").textContent = "一発逆転！券種は三連複・三連単・WIN5の3つだけ、各1/3だ。";
 $("roulette-result").textContent = "";
 $("btn-to-stage2").hidden = true;
+$("btn-spin-wheel").hidden = false;
+$("btn-spin-wheel").disabled = false;
 $("btn-spin-wheel").textContent = "ルーレットを回す";
 $("ball").hidden = true;
 $("callout").hidden = true;
@@ -1201,6 +1207,8 @@ $("btn-register").classList.remove("stop");
 show("screen-stage1");
 $("roulette-result").textContent = "";
 $("btn-to-stage2").hidden = true;
+$("btn-spin-wheel").hidden = false;
+$("btn-spin-wheel").disabled = false;
 $("btn-spin-wheel").textContent = "ルーレットを回す";
 });
 $("btn-register").addEventListener("click", function () {
