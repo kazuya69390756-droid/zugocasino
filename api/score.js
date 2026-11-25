@@ -1,13 +1,22 @@
 // POST /api/score {name, score, ticket, oddsText}
 // Score = the odds of a HIT result (misses are never submitted).
-// Keeps each player's best-3 hit odds; the overall ranking uses the best one.
-// Keys are prefixed "zc:" so they never mix with ずごたたき ("zt:").
+// Storage (all keys prefixed "zc:" so they never mix with ずごたたき "zt:"):
+//  - zc:top3 (hash name -> JSON runs): the player's lifetime best-10 runs
+//    (key name kept from the top-3 era for data continuity)
+//  - zc:ranking (zset) + zc:details: lifetime overall, best run per player
+//  - zc:daily:<JST date> (+ :detail): today's best per player, TTL 8 days
+//  - zc:weekly:<JST Monday> (+ :detail): this week's best per player,
+//    TTL 14 days; the week rolls over Sunday 24:00 (= Monday 00:00 JST)
+//  - zc:ticket:<ticket> (+ zc:ticket-detail:<ticket>): lifetime best
+//    per player for that ticket type
 const { redisCmd, redisConfig } = require('./_redis');
 
 const RANK_KEY = 'zc:ranking';
 const DETAIL_KEY = 'zc:details';
 const TOP3_KEY = 'zc:top3';
 const MAX_SCORE = 2000000000;
+const DAY_TTL = 691200;
+const WEEK_TTL = 1209600;
 
 function cleanName(v) {
   if (typeof v !== 'string') return '';
@@ -18,6 +27,33 @@ function cleanScore(v) {
   if (!Number.isFinite(n) || n <= 0) return null;
   // odds carry at most 1 decimal place
   return Math.min(MAX_SCORE, Math.round(n * 10) / 10);
+}
+
+function pad(n) { return String(n).padStart(2, '0'); }
+function jstDate(ts) { return new Date(ts + 9 * 3600 * 1000); }
+function dailyKey(ts) {
+  const d = jstDate(ts);
+  return 'zc:daily:' + d.getUTCFullYear() + '-' + pad(d.getUTCMonth() + 1) + '-' + pad(d.getUTCDate());
+}
+function weeklyKey(ts) {
+  const d = jstDate(ts);
+  const shift = (d.getUTCDay() + 6) % 7; // days since Monday
+  const mon = new Date(d.getTime() - shift * 86400 * 1000);
+  return 'zc:weekly:' + mon.getUTCFullYear() + '-' + pad(mon.getUTCMonth() + 1) + '-' + pad(mon.getUTCDate());
+}
+
+// Keep only the player's best run on a board (zset + detail hash).
+async function upsertBoard(zKey, detKey, name, run, ttl) {
+  const prev = await redisCmd(['ZSCORE', zKey, name]);
+  const prevScore = prev === null ? -1 : Number(prev);
+  if (run.score > prevScore) {
+    await redisCmd(['ZADD', zKey, run.score, name]);
+    await redisCmd(['HSET', detKey, name, JSON.stringify(run)]);
+  }
+  if (ttl) {
+    await redisCmd(['EXPIRE', zKey, ttl]);
+    await redisCmd(['EXPIRE', detKey, ttl]);
+  }
 }
 
 module.exports = async (req, res) => {
@@ -44,24 +80,33 @@ module.exports = async (req, res) => {
     return;
   }
   try {
-    const run = { score, ticket, oddsText, ts: Date.now() };
-    // personal top 3 (by hit odds)
-    let top3 = [];
-    const rawTop3 = await redisCmd(['HGET', TOP3_KEY, name]);
-    if (rawTop3) { try { top3 = JSON.parse(rawTop3); } catch (e) { top3 = []; } }
-    if (!Array.isArray(top3)) top3 = [];
-    top3.push(run);
-    top3.sort((a, b) => b.score - a.score);
-    top3 = top3.slice(0, 3);
-    await redisCmd(['HSET', TOP3_KEY, name, JSON.stringify(top3)]);
-    // overall ranking = best hit odds
-    const best = top3[0].score;
+    const now = Date.now();
+    const run = { score, ticket, oddsText, ts: now };
+    // personal lifetime best-10
+    let topList = [];
+    const rawTop = await redisCmd(['HGET', TOP3_KEY, name]);
+    if (rawTop) { try { topList = JSON.parse(rawTop); } catch (e) { topList = []; } }
+    if (!Array.isArray(topList)) topList = [];
+    topList.push(run);
+    topList.sort((a, b) => b.score - a.score);
+    topList = topList.slice(0, 10);
+    await redisCmd(['HSET', TOP3_KEY, name, JSON.stringify(topList)]);
+    // lifetime overall ranking = best hit odds
+    const best = topList[0].score;
     const prev = await redisCmd(['ZSCORE', RANK_KEY, name]);
     const prevScore = prev === null ? -1 : Number(prev);
     const updated = best > prevScore;
     if (updated) {
       await redisCmd(['ZADD', RANK_KEY, best, name]);
-      await redisCmd(['HSET', DETAIL_KEY, name, JSON.stringify(top3[0])]);
+      await redisCmd(['HSET', DETAIL_KEY, name, JSON.stringify(topList[0])]);
+    }
+    // daily / weekly / per-ticket boards
+    const dk = dailyKey(now);
+    await upsertBoard(dk, dk + ':detail', name, run, DAY_TTL);
+    const wk = weeklyKey(now);
+    await upsertBoard(wk, wk + ':detail', name, run, WEEK_TTL);
+    if (ticket) {
+      await upsertBoard('zc:ticket:' + ticket, 'zc:ticket-detail:' + ticket, name, run, 0);
     }
     const rankIdx = await redisCmd(['ZREVRANK', RANK_KEY, name]);
     const total = await redisCmd(['ZCARD', RANK_KEY]);
@@ -71,7 +116,8 @@ module.exports = async (req, res) => {
       best,
       rank: rankIdx === null ? null : rankIdx + 1,
       total,
-      myTop3: top3,
+      myTop3: topList.slice(0, 3),
+      myTop10: topList,
     });
   } catch (e) {
     res.status(500).json({ ok: false, error: 'server_error' });

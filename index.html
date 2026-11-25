@@ -1065,11 +1065,11 @@ return;
 }
 $("rank-total").textContent = j.total + "人が登録中";
 if (savedName) {
-var html = '<p class="rank-sec">自分のベスト TOP3</p>';
+var html = '<p class="rank-sec">' + esc(savedName) + 'さんの生涯獲得ランキング TOP10</p>';
 if (j.me) {
-html += '<p class="rank-me-info">' + esc(j.me.name) + " さん：現在 " + j.me.rank +
-"位（ベスト " + fmtScore(j.me.best, (j.me.myTop3[0] || {}).oddsText) + "）</p>";
-html += j.me.myTop3.map(function (r, i) {
+html += '<p class="rank-me-info">生涯総合では現在 ' + j.me.rank +
+"位（ベスト " + fmtScore(j.me.best, (j.me.myTop10[0] || {}).oddsText) + "）</p>";
+html += j.me.myTop10.map(function (r, i) {
 return rowHtml((i + 1) + "", "", r.ticket, r.score, r.oddsText, true);
 }).join("");
 } else {
@@ -1077,14 +1077,23 @@ html += '<p class="rank-me-info">まだ登録がありません。的中した�
 }
 $("rank-me").innerHTML = html;
 }
-var listHtml = '<p class="rank-sec">全体ランキング TOP10</p>';
-if (!j.entries.length) {
-listHtml += '<p class="rank-empty">まだ登録がありません。最初の登録者になろう！</p>';
+function boardSection(title, entries, showTicket) {
+var h = '<p class="rank-sec">' + title + "</p>";
+if (!entries || !entries.length) {
+h += '<p class="rank-empty">まだ登録がありません</p>';
 } else {
-listHtml += j.entries.map(function (e) {
-return rowHtml(e.rank + "位", e.name, e.ticket, e.score, e.oddsText, savedName && e.name === savedName);
+h += entries.map(function (e) {
+return rowHtml(e.rank + "位", e.name, showTicket? e.ticket: "", e.score, e.oddsText, savedName && e.name === savedName);
 }).join("");
 }
+return h;
+}
+var listHtml = boardSection("本日の総合ランキング TOP10", j.daily, true);
+listHtml += boardSection("今週の総合ランキング TOP10", j.weekly, true);
+var ticketBoards = j.tickets || {};
+["単勝", "馬連", "三連複", "三連単"].forEach(function (t) {
+listHtml += boardSection(t + " ランキング TOP5", ticketBoards[t], false);
+});
 $("rank-list").innerHTML = listHtml;
 }).catch(function () {
 $("rank-total").textContent = "読み込みに失敗しました。通信環境を確認してね";
