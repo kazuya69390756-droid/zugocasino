@@ -66,17 +66,26 @@ module.exports = async (req, res) => {
     let me = null;
     const myName = typeof req.query?.name === 'string' ? req.query.name.trim().slice(0, 24) : '';
     if (myName) {
+      let myTop = [];
+      const rawTop = await redisCmd(['HGET', TOP3_KEY, myName]);
+      if (rawTop) { try { myTop = JSON.parse(rawTop); } catch (e) { myTop = []; } }
+      if (!Array.isArray(myTop)) myTop = [];
       const myBest = await redisCmd(['ZSCORE', RANK_KEY, myName]);
       if (myBest !== null) {
         const rankIdx = await redisCmd(['ZREVRANK', RANK_KEY, myName]);
-        let myTop = [];
-        const rawTop = await redisCmd(['HGET', TOP3_KEY, myName]);
-        if (rawTop) { try { myTop = JSON.parse(rawTop); } catch (e) { myTop = []; } }
-        if (!Array.isArray(myTop)) myTop = [];
         me = {
           name: myName,
           best: Number(myBest),
           rank: rankIdx === null ? null : rankIdx + 1,
+          myTop3: myTop.slice(0, 3),
+          myTop10: myTop,
+        };
+      } else if (myTop.length) {
+        // Outside the lifetime top-250 cap: personal records still exist.
+        me = {
+          name: myName,
+          best: myTop[0].score,
+          rank: null,
           myTop3: myTop.slice(0, 3),
           myTop10: myTop,
         };

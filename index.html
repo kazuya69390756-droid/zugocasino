@@ -1067,8 +1067,8 @@ $("rank-total").textContent = j.total + "人が登録中";
 if (savedName) {
 var html = '<p class="rank-sec">' + esc(savedName) + 'さんの生涯獲得ランキング TOP10</p>';
 if (j.me) {
-html += '<p class="rank-me-info">生涯総合では現在 ' + j.me.rank +
-"位（ベスト " + fmtScore(j.me.best, (j.me.myTop10[0] || {}).oddsText) + "）</p>";
+html += '<p class="rank-me-info">生涯総合では' + (j.me.rank? "現在 " + j.me.rank + "位": "250位以下") +
+"（ベスト " + fmtScore(j.me.best, (j.me.myTop10[0] || {}).oddsText) + "）</p>";
 html += j.me.myTop10.map(function (r, i) {
 return rowHtml((i + 1) + "", "", r.ticket, r.score, r.oddsText, true);
 }).join("");

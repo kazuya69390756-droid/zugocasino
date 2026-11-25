@@ -17,6 +17,7 @@ const TOP3_KEY = 'zc:top3';
 const MAX_SCORE = 2000000000;
 const DAY_TTL = 691200;
 const WEEK_TTL = 1209600;
+const BOARD_CAP = 250; // keep at most the top 250 players per board
 
 function cleanName(v) {
   if (typeof v !== 'string') return '';
@@ -42,6 +43,19 @@ function weeklyKey(ts) {
   return 'zc:weekly:' + mon.getUTCFullYear() + '-' + pad(mon.getUTCMonth() + 1) + '-' + pad(mon.getUTCDate());
 }
 
+// Trim a board to the top BOARD_CAP players, dropping the lowest
+// scores and their detail entries.
+async function trimBoard(zKey, detKey) {
+  const total = Number(await redisCmd(['ZCARD', zKey]));
+  if (!Number.isFinite(total) || total <= BOARD_CAP) return;
+  const excess = total - BOARD_CAP;
+  const dropped = await redisCmd(['ZRANGE', zKey, 0, excess - 1]); // lowest first
+  await redisCmd(['ZREMRANGEBYRANK', zKey, 0, excess - 1]);
+  for (const nm of dropped || []) {
+    await redisCmd(['HDEL', detKey, nm]);
+  }
+}
+
 // Keep only the player's best run on a board (zset + detail hash).
 async function upsertBoard(zKey, detKey, name, run, ttl) {
   const prev = await redisCmd(['ZSCORE', zKey, name]);
@@ -49,6 +63,7 @@ async function upsertBoard(zKey, detKey, name, run, ttl) {
   if (run.score > prevScore) {
     await redisCmd(['ZADD', zKey, run.score, name]);
     await redisCmd(['HSET', detKey, name, JSON.stringify(run)]);
+    await trimBoard(zKey, detKey);
   }
   if (ttl) {
     await redisCmd(['EXPIRE', zKey, ttl]);
@@ -99,6 +114,7 @@ module.exports = async (req, res) => {
     if (updated) {
       await redisCmd(['ZADD', RANK_KEY, best, name]);
       await redisCmd(['HSET', DETAIL_KEY, name, JSON.stringify(topList[0])]);
+      await trimBoard(RANK_KEY, DETAIL_KEY);
     }
     // daily / weekly / per-ticket boards
     const dk = dailyKey(now);
