@@ -7,8 +7,8 @@
 //  - zc:daily:<JST date> (+ :detail): today's best per player, TTL 8 days
 //  - zc:weekly:<JST Monday> (+ :detail): this week's best per player,
 //    TTL 14 days; the week rolls over Sunday 24:00 (= Monday 00:00 JST)
-//  - zc:ticket:<ticket> (+ zc:ticket-detail:<ticket>): lifetime best
-//    per player for that ticket type
+//  - zc:daily:<date>:ticket:<ticket> (+ :detail): today's best per
+//    player for that ticket type (resets daily, TTL 8 days)
 const { redisCmd, redisConfig } = require('./_redis');
 
 const RANK_KEY = 'zc:ranking';
@@ -122,7 +122,8 @@ module.exports = async (req, res) => {
     const wk = weeklyKey(now);
     await upsertBoard(wk, wk + ':detail', name, run, WEEK_TTL);
     if (ticket) {
-      await upsertBoard('zc:ticket:' + ticket, 'zc:ticket-detail:' + ticket, name, run, 0);
+      const tk = dk + ':ticket:' + ticket; // per-ticket boards reset daily
+      await upsertBoard(tk, tk + ':detail', name, run, DAY_TTL);
     }
     const rankIdx = await redisCmd(['ZREVRANK', RANK_KEY, name]);
     const total = await redisCmd(['ZCARD', RANK_KEY]);

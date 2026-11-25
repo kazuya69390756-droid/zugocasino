@@ -61,7 +61,8 @@ module.exports = async (req, res) => {
     const weekly = await readBoard(wk, wk + ':detail', 10);
     const tickets = {};
     for (const t of TICKET_BOARDS) {
-      tickets[t] = await readBoard('zc:ticket:' + t, 'zc:ticket-detail:' + t, 5);
+      const tk = dk + ':ticket:' + t; // per-ticket boards are daily
+      tickets[t] = await readBoard(tk, tk + ':detail', 5);
     }
     let me = null;
     const myName = typeof req.query?.name === 'string' ? req.query.name.trim().slice(0, 24) : '';
