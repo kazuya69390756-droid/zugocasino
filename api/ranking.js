@@ -47,6 +47,10 @@ async function readBoard(zKey, detKey, n) {
 
 module.exports = async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
+  // Allow other pages the owner runs (e.g. the start page) to read rankings.
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  if (req.method === 'OPTIONS') { res.status(204).end(); return; }
   if (!redisConfig()) {
     res.status(503).json({ ok: false, error: 'ranking_not_ready', envNames: presentEnvNames() });
     return;
