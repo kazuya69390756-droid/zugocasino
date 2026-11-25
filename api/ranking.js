@@ -80,6 +80,18 @@ module.exports = async (req, res) => {
       if (rawTop) { try { myTop = JSON.parse(rawTop); } catch (e) { myTop = []; } }
       if (!Array.isArray(myTop)) myTop = [];
       const myBest = await redisCmd(['ZSCORE', RANK_KEY, myName]);
+      // The player's own top-5 runs today. Fallback: today's board
+      // detail (their best run today) for runs recorded before the
+      // per-day runs list existed.
+      let myDailyTop5 = [];
+      const todayDk = dailyKey(now);
+      const rawDay = await redisCmd(['HGET', todayDk + ':runs', myName]);
+      if (rawDay) { try { myDailyTop5 = JSON.parse(rawDay); } catch (e) { myDailyTop5 = []; } }
+      if (!Array.isArray(myDailyTop5)) myDailyTop5 = [];
+      if (!myDailyTop5.length) {
+        const rawDet = await redisCmd(['HGET', todayDk + ':detail', myName]);
+        if (rawDet) { try { myDailyTop5 = [JSON.parse(rawDet)]; } catch (e) { myDailyTop5 = []; } }
+      }
       if (myBest !== null) {
         const rankIdx = await redisCmd(['ZREVRANK', RANK_KEY, myName]);
         me = {
@@ -88,6 +100,7 @@ module.exports = async (req, res) => {
           rank: rankIdx === null ? null : rankIdx + 1,
           myTop3: myTop.slice(0, 3),
           myTop10: myTop,
+          myDailyTop5,
         };
       } else if (myTop.length) {
         // Outside the lifetime top-250 cap: personal records still exist.
@@ -97,6 +110,16 @@ module.exports = async (req, res) => {
           rank: null,
           myTop3: myTop.slice(0, 3),
           myTop10: myTop,
+          myDailyTop5,
+        };
+      } else if (myDailyTop5.length) {
+        me = {
+          name: myName,
+          best: myDailyTop5[0].score,
+          rank: null,
+          myTop3: [],
+          myTop10: [],
+          myDailyTop5,
         };
       }
     }

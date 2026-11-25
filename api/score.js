@@ -5,6 +5,8 @@
 //    (key name kept from the top-3 era for data continuity)
 //  - zc:ranking (zset) + zc:details: lifetime overall, best run per player
 //  - zc:daily:<JST date> (+ :detail): today's best per player, TTL 8 days
+//  - zc:daily:<JST date>:runs (hash name -> JSON runs): the player's own
+//    top-5 runs of the day, TTL 8 days
 //  - zc:weekly:<JST Monday> (+ :detail): this week's best per player,
 //    TTL 14 days; the week rolls over Sunday 24:00 (= Monday 00:00 JST)
 //  - zc:daily:<date>:ticket:<ticket> (+ :detail): today's best per
@@ -119,6 +121,17 @@ module.exports = async (req, res) => {
     // daily / weekly / per-ticket boards
     const dk = dailyKey(now);
     await upsertBoard(dk, dk + ':detail', name, run, DAY_TTL);
+    // the player's own runs today (top 5), for "your today TOP5"
+    const runsKey = dk + ':runs';
+    let dayRuns = [];
+    const rawRuns = await redisCmd(['HGET', runsKey, name]);
+    if (rawRuns) { try { dayRuns = JSON.parse(rawRuns); } catch (e) { dayRuns = []; } }
+    if (!Array.isArray(dayRuns)) dayRuns = [];
+    dayRuns.push(run);
+    dayRuns.sort((a, b) => b.score - a.score);
+    dayRuns = dayRuns.slice(0, 5);
+    await redisCmd(['HSET', runsKey, name, JSON.stringify(dayRuns)]);
+    await redisCmd(['EXPIRE', runsKey, DAY_TTL]);
     const wk = weeklyKey(now);
     await upsertBoard(wk, wk + ':detail', name, run, WEEK_TTL);
     if (ticket) {

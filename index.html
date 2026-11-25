@@ -1076,11 +1076,19 @@ return;
 }
 $("rank-total").textContent = j.total + "人が登録中";
 if (savedName) {
-var html = '<p class="rank-sec">' + esc(savedName) + 'さんの生涯獲得ランキング TOP10</p>';
-if (j.me) {
+var html = '<p class="rank-sec">' + esc(savedName) + 'さんの本日のTOP5</p>';
+if (j.me && j.me.myDailyTop5 && j.me.myDailyTop5.length) {
+html += j.me.myDailyTop5.map(function (r, i) {
+return rowHtml((i + 1) + "", "", r.ticket, r.score, r.oddsText, true, "");
+}).join("");
+} else {
+html += '<p class="rank-me-info">今日はまだ的中がありません</p>';
+}
+html += '<p class="rank-sec">' + esc(savedName) + 'さんの生涯獲得ランキング TOP5</p>';
+if (j.me && j.me.myTop10 && j.me.myTop10.length) {
 html += '<p class="rank-me-info">生涯総合では' + (j.me.rank? "現在 " + j.me.rank + "位": "250位以下") +
 "（ベスト " + fmtScore(j.me.best, (j.me.myTop10[0] || {}).oddsText) + "）</p>";
-html += j.me.myTop10.map(function (r, i) {
+html += j.me.myTop10.slice(0, 5).map(function (r, i) {
 return rowHtml((i + 1) + "", "", r.ticket, r.score, r.oddsText, true, fmtDate(r.ts));
 }).join("");
 } else {
